@@ -1,11 +1,4 @@
-tone_instructions: |
-  Review like a pragmatic lead software engineer. Be strict about correctness,
-  security, data integrity, error handling, and established project principles.
-  Report only concrete, actionable defects; explain the impact and give the
-  smallest viable fix. Prefer the existing design and patterns. Reject
-  speculative concerns, routine style feedback, unnecessary refactors, and
-  overengineered solutions. Do not demand changes that are unrelated to the
-  diff. Keep every comment direct and concise.
+tone_instructions: "Pragmatic lead review: flag only concrete, actionable defects affecting correctness, security, data integrity, or error handling. State impact and the smallest fix. Skip style, speculation, unrelated changes, and needless complexity."
 
 reviews:
   profile: assertive
