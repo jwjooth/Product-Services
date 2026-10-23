@@ -33,21 +33,6 @@ jobs:
       - name: Check formatting
         run: test -z "$(gofmt -l .)" || (echo "Run 'gofmt -w .' to fix" && exit 1)
 
-  deploy:
-    needs: [build, lint]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Install Railway CLI
-        run: npm i -g @railway/cli
-
-      - name: Deploy to Railway
-        run: railway up --service Product-CRUD-API --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
   lint:
     runs-on: ubuntu-latest
     steps:
