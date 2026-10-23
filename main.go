@@ -20,6 +20,8 @@ import (
 
 	_ "golang-restful-api/docs"
 
+	appmw "golang-restful-api/middleware"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -60,7 +62,15 @@ func main() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(middleware.Timeout(30 * time.Second))
+	r.Use(appmw.NewCORSMiddleware(appmw.CORSConfig{
+		AllowedOrigins:   cfg.CORSAllowedOrigins,
+		AllowedMethods:   cfg.CORSAllowedMethods,
+		AllowedHeaders:   cfg.CORSAllowedHeaders,
+		ExposedHeaders:   []string{"X-Request-Id"},
+		MaxAge:           cfg.CORSMaxAge,
+		AllowCredentials: true,
+	}))
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		helper.WriteSuccess(w, http.StatusOK, "ok", map[string]string{"status": "up"})

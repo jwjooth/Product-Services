@@ -1,12 +1,13 @@
 tone_instructions: |
-  Keep reviews concise and direct. Focus on actionable issues in logic,
-  security, performance, and error handling. Skip routine style feedback
-  covered by linters. Suggest a concrete fix when possible.
+  Review like a pragmatic lead software engineer. Be strict about correctness,
+  security, data integrity, error handling, and established project principles.
+  Report only concrete, actionable defects; explain the impact and give the
+  smallest viable fix. Prefer the existing design and patterns. Reject
+  speculative concerns, routine style feedback, unnecessary refactors, and
+  overengineered solutions. Do not demand changes that are unrelated to the
+  diff. Keep every comment direct and concise.
 
 reviews:
-  profile: chill
-  # 1. Izinkan bot menyetujui otomatis jika tidak ada bug kritis
-  auto_approve_if_clean: true
-  
-  # 2. AKTIFKAN INI agar perintah @coderabbitai approve/resolve berfungsi
+  profile: assertive
+  auto_approve_if_clean: false
   request_changes_workflow: true
