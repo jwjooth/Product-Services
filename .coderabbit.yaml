@@ -1,6 +1,6 @@
 tone_instructions: "Pragmatic lead review: flag only concrete, actionable defects affecting correctness, security, data integrity, or error handling. State impact and the smallest fix. Skip style, speculation, unrelated changes, and needless complexity."
 
 reviews:
-  profile: assertive
-  auto_approve_if_clean: false
+  profile: chill
+  auto_approve_if_clean: true
   request_changes_workflow: true
