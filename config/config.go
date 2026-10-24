@@ -46,6 +46,7 @@ func Load() Config {
 			"Authorization",
 			"X-Request-Id",
 		}),
+		CORSAllowedMethods: getEnvList("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
 	}
 }
 
@@ -119,16 +120,16 @@ func getEnvInt(key string, fallback int) int {
 
 func getEnvList(key string, fallback []string) []string {
 	if v := os.Getenv(key); v != "" {
-		return fallback
-	}
-	var result []string
-	for item := range strings.SplitSeq(os.Getenv(key), ",") {
-		if cleaned := strings.TrimSpace(item); cleaned != "" {
-			result = append(result, cleaned)
+		var result []string
+		for item := range strings.SplitSeq(v, ",") {
+			if cleaned := strings.TrimSpace(item); cleaned != "" {
+				result = append(result, cleaned)
+			}
 		}
+		if len(result) == 0 {
+			return fallback
+		}
+		return result
 	}
-	if len(result) == 0 {
-		return fallback
-	}
-	return result
+	return fallback
 }
