@@ -14,7 +14,7 @@ import (
 
 // ProductService holds business logic + validation and maps entities to DTOs.
 type ProductService interface {
-	List(ctx context.Context, page, perPage int) ([]payload.ProductResponse, int64, *helper.AppError)
+	List(ctx context.Context, page, perPage int, filter payload.ProductFilter) ([]payload.ProductResponse, int64, *helper.AppError)
 	GetByID(ctx context.Context, id uint) (payload.ProductResponse, *helper.AppError)
 	Create(ctx context.Context, req payload.CreateProductRequest) (payload.ProductResponse, *helper.AppError)
 	Update(ctx context.Context, id uint, req payload.UpdateProductRequest) (payload.ProductResponse, *helper.AppError)
@@ -38,7 +38,7 @@ func NewProductServiceImplWithDB(_ any, repo repository.ProductRepository) Produ
 	return NewProductServiceImpl(repo)
 }
 
-func (s *productService) List(ctx context.Context, page, perPage int) ([]payload.ProductResponse, int64, *helper.AppError) {
+func (s *productService) List(ctx context.Context, page, perPage int, filter payload.ProductFilter) ([]payload.ProductResponse, int64, *helper.AppError) {
 	if page < 1 {
 		page = 1
 	}
@@ -50,7 +50,7 @@ func (s *productService) List(ctx context.Context, page, perPage int) ([]payload
 	}
 	offset := (page - 1) * perPage
 
-	records, total, err := s.repo.FindAll(ctx, perPage, offset)
+	records, total, err := s.repo.FindAll(ctx, perPage, offset, filter)
 	if err != nil {
 		return nil, 0, helper.Internal("failed to fetch products", err)
 	}

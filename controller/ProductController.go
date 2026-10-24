@@ -46,8 +46,24 @@ func NewProductController(svc service.ProductService) ProductController {
 func (c *productController) ListProducts(w http.ResponseWriter, r *http.Request) {
 	page := helper.QueryInt(r, "page", 1)
 	perPage := helper.QueryInt(r, "per_page", 10)
+	filter := payload.ProductFilter{
+		Category: helper.QueryString(r, "category"),
+		Search:   helper.QueryString(r, "q"),
+		Sort:     helper.QueryString(r, "sort"),
+	}
+	if v, ok := helper.QueryFloat(r, "max_price"); ok {
+		filter.MaxPrice = &v
+	}
+	if v, ok := helper.QueryFloat(r, "min_price"); ok {
+		filter.MinPrice = &v
+	}
 
-	items, total, appErr := c.service.List(r.Context(), page, perPage)
+	if filter.MinPrice != nil && filter.MaxPrice != nil && *filter.MinPrice > *filter.MaxPrice {
+		helper.WriteError(w, http.StatusBadRequest, "min_price cannot exceed max_price")
+		return
+	}
+
+	items, total, appErr := c.service.List(r.Context(), page, perPage, filter)
 	if appErr != nil {
 		helper.WriteAppError(w, appErr)
 		return

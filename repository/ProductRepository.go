@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"golang-restful-api/entities"
+	"golang-restful-api/payload"
 
 	"gorm.io/gorm"
 )
@@ -16,7 +17,7 @@ var ErrNotFound = errors.New("product not found")
 // No DTOs, no HTTP codes, no validation here.
 type ProductRepository interface {
 	Create(ctx context.Context, product *entities.ProductEntity) (*entities.ProductEntity, error)
-	FindAll(ctx context.Context, limit, offset int) ([]entities.ProductEntity, int64, error)
+	FindAll(ctx context.Context, limit, offset int, filter payload.ProductFilter) ([]entities.ProductEntity, int64, error)
 	FindByID(ctx context.Context, id uint) (*entities.ProductEntity, error)
 	Update(ctx context.Context, product *entities.ProductEntity) (*entities.ProductEntity, error)
 	Delete(ctx context.Context, id uint) error
@@ -38,14 +39,32 @@ func (r *productRepository) Create(ctx context.Context, product *entities.Produc
 	return product, nil
 }
 
-func (r *productRepository) FindAll(ctx context.Context, limit, offset int) ([]entities.ProductEntity, int64, error) {
+func (r *productRepository) FindAll(ctx context.Context, limit, offset int, filter payload.ProductFilter) ([]entities.ProductEntity, int64, error) {
 	var total int64
 	if err := r.db.WithContext(ctx).Model(&entities.ProductEntity{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	var records []entities.ProductEntity
-	q := r.db.WithContext(ctx).Order("id ASC")
+	q := r.db.WithContext(ctx)
+	if filter.Sort != "" {
+		q = q.Order(payload.SortClause(filter.Sort))
+	} else {
+		q = q.Order("id ASC")
+	}
+	if filter.Category != "" {
+		q = q.Where("category = ?", filter.Category)
+	}
+	if filter.MaxPrice != nil {
+		q = q.Where("price <= ?", *filter.MaxPrice)
+	}
+	if filter.MinPrice != nil {
+		q = q.Where("price >= ?", *filter.MinPrice)
+	}
+	if filter.Search != "" {
+		like := "%" + filter.Search + "%"
+		q = q.Where("name LIKE ? OR sku LIKE ?", like, like)
+	}
 	if limit > 0 {
 		q = q.Limit(limit)
 	}

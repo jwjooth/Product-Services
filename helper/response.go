@@ -5,6 +5,7 @@ import (
 	"golang-restful-api/payload"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -74,4 +75,23 @@ func QueryInt(r *http.Request, key string, fallback int) int {
 		return fallback
 	}
 	return n
+}
+
+// QueryString returns a trimmed query parameter, or "" when absent.
+func QueryString(r *http.Request, key string) string {
+	return strings.TrimSpace(r.URL.Query().Get(key))
+}
+
+// QueryFloat returns a query parameter parsed as float64. ok is false when
+// the parameter is absent or malformed.
+func QueryFloat(r *http.Request, key string) (float64, bool) {
+	raw := strings.TrimSpace(r.URL.Query().Get(key))
+	if raw == "" {
+		return 0, false
+	}
+	n, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
 }

@@ -185,6 +185,17 @@ paths:
       produces:
       - application/json
       responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/helper.SuccessEnvelope'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/payload.ProductResponse'
+                  type: array
+              type: object
         "201":
           description: Created
           schema:
