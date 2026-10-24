@@ -33,11 +33,16 @@ func NewProductController(svc service.ProductService) ProductController {
 // @Tags product
 // @Accept json
 // @Produce json
-// @Param page query int false "Page number"
-// @Param per_page query int false "Items per page"
-// @Success 200 {object} payload.ListProductsResponse
+// @Param page query int false "Page number (1-based)" minimum(1) default(1)
+// @Param per_page query int false "Items per page (max 100)" minimum(1) maximum(100) default(10)
+// @Param category query string false "Filter by category"
+// @Param min_price query number false "Minimum price"
+// @Param max_price query number false "Maximum price"
+// @Param q query string false "Search query (name or SKU)"
+// @Param sort query string false "Sort order: price_asc, price_desc, name_asc, newest"
+// @Success 200 {object} helper.SuccessEnvelope{Data=[]payload.ProductResponse,Meta=payload.ListProductsMeta}
 // @Failure 500 {object} helper.ErrorEnvelope
-// @Router /products [get]
+// @Router /api/v1/products [get]
 func (c *productController) ListProducts(w http.ResponseWriter, r *http.Request) {
 	page := helper.QueryInt(r, "page", 1)
 	perPage := helper.QueryInt(r, "per_page", 10)
@@ -62,10 +67,10 @@ func (c *productController) ListProducts(w http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Param id path int true "Product ID"
-// @Success 200 {object} payload.ProductResponse
 // @Failure 400 {object} helper.ErrorEnvelope
 // @Failure 404 {object} helper.ErrorEnvelope
-// @Router /products/{id} [get]
+// @Router /api/v1/products/{id} [get]
+// @Success 200 {object} helper.SuccessEnvelope{Data=payload.ProductResponse}
 func (c *productController) GetProductByID(w http.ResponseWriter, r *http.Request) {
 	id, appErr := helper.ParseIDParam(r, "id")
 	if appErr != nil {
@@ -86,10 +91,10 @@ func (c *productController) GetProductByID(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Param body body payload.CreateProductRequest true "Product request payload"
-// @Success 201 {object} payload.ProductResponse
 // @Failure 400 {object} helper.ErrorEnvelope
 // @Failure 500 {object} helper.ErrorEnvelope
-// @Router /products [post]
+// @Router /api/v1/products [post]
+// @Success 201 {object} helper.SuccessEnvelope{Data=payload.ProductResponse}
 func (c *productController) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req payload.CreateProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -111,11 +116,11 @@ func (c *productController) CreateProduct(w http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param id path int true "Product ID"
 // @Param body body payload.UpdateProductRequest true "Product update payload"
-// @Success 200 {object} payload.ProductResponse
 // @Failure 400 {object} helper.ErrorEnvelope
 // @Failure 404 {object} helper.ErrorEnvelope
 // @Failure 500 {object} helper.ErrorEnvelope
-// @Router /products/{id} [put]
+// @Router /api/v1/products/{id} [put]
+// @Success 200 {object} helper.SuccessEnvelope{Data=payload.ProductResponse}
 func (c *productController) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	id, appErr := helper.ParseIDParam(r, "id")
 	if appErr != nil {
@@ -141,11 +146,11 @@ func (c *productController) UpdateProduct(w http.ResponseWriter, r *http.Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Product ID"
-// @Success 200 {object} map[string]string
 // @Failure 400 {object} helper.ErrorEnvelope
 // @Failure 404 {object} helper.ErrorEnvelope
 // @Failure 500 {object} helper.ErrorEnvelope
-// @Router /products/{id} [delete]
+// @Router /api/v1/products/{id} [delete]
+// @Success 200 {object} helper.SuccessEnvelope
 func (c *productController) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id, appErr := helper.ParseIDParam(r, "id")
 	if appErr != nil {
