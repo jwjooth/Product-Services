@@ -21,8 +21,8 @@ type MockProductService struct {
 	mock.Mock
 }
 
-func (m *MockProductService) List(ctx context.Context, page, perPage int) ([]payload.ProductResponse, int64, *helper.AppError) {
-	args := m.Called(ctx, page, perPage)
+func (m *MockProductService) List(ctx context.Context, page, perPage int, filter payload.ProductFilter) ([]payload.ProductResponse, int64, *helper.AppError) {
+	args := m.Called(ctx, page, perPage, filter)
 	if args.Get(0) == nil {
 		var err *helper.AppError
 		if args.Get(2) != nil {
@@ -92,7 +92,7 @@ func TestProductController_ListProducts(t *testing.T) {
 		expectedList := []payload.ProductResponse{
 			{ID: 1, Name: "Keyboard", Price: 100, Stock: 5, Category: "Accessories", ImageUrl: "img.jpg", SKU: "KB001"},
 		}
-		svc.On("List", mock.Anything, 1, 10).Return(expectedList, int64(1), nil)
+		svc.On("List", mock.Anything, 1, 10, payload.ProductFilter{}).Return(expectedList, int64(1), nil)
 
 		req := httptest.NewRequest(http.MethodGet, "/products?page=1&per_page=10", nil)
 		rec := httptest.NewRecorder()
@@ -107,13 +107,27 @@ func TestProductController_ListProducts(t *testing.T) {
 		ctrl := controller.NewProductController(svc)
 		router := setupProductRouter(ctrl)
 
-		svc.On("List", mock.Anything, 1, 10).Return(nil, int64(0), helper.Internal("db failure", nil))
+		svc.On("List", mock.Anything, 1, 10, payload.ProductFilter{}).Return(nil, int64(0), helper.Internal("db failure", nil))
 
 		req := httptest.NewRequest(http.MethodGet, "/products?page=1&per_page=10", nil)
 		rec := httptest.NewRecorder()
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		svc.AssertExpectations(t)
+	})
+
+	t.Run("min_price exceeds max_price", func(t *testing.T) {
+		svc := new(MockProductService)
+		ctrl := controller.NewProductController(svc)
+		router := setupProductRouter(ctrl)
+
+		req := httptest.NewRequest(http.MethodGet, "/products?min_price=100&max_price=50", nil)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "min_price cannot exceed max_price")
 		svc.AssertExpectations(t)
 	})
 }

@@ -28,8 +28,8 @@ func (m *MockProductRepository) Create(ctx context.Context, product *entities.Pr
 	return args.Get(0).(*entities.ProductEntity), args.Error(1)
 }
 
-func (m *MockProductRepository) FindAll(ctx context.Context, limit, offset int) ([]entities.ProductEntity, int64, error) {
-	args := m.Called(ctx, limit, offset)
+func (m *MockProductRepository) FindAll(ctx context.Context, limit, offset int, filter payload.ProductFilter) ([]entities.ProductEntity, int64, error) {
+	args := m.Called(ctx, limit, offset, filter)
 	if args.Get(0) == nil {
 		return nil, args.Get(1).(int64), args.Error(2)
 	}
@@ -68,9 +68,9 @@ func TestProductService_List(t *testing.T) {
 			{ID: 2, Name: "Product 2", Price: 200, Stock: 5, Category: "Home", ImageUrl: "img2.jpg", SKU: "SKU002", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		}
 
-		mockRepo.On("FindAll", mock.Anything, 10, 0).Return(expectedList, int64(2), nil)
+		mockRepo.On("FindAll", mock.Anything, 10, 0, payload.ProductFilter{}).Return(expectedList, int64(2), nil)
 
-		res, total, appErr := svc.List(context.Background(), 1, 10)
+		res, total, appErr := svc.List(context.Background(), 1, 10, payload.ProductFilter{})
 		assert.Nil(t, appErr)
 		assert.Equal(t, int64(2), total)
 		assert.Len(t, res, 2)
@@ -82,9 +82,9 @@ func TestProductService_List(t *testing.T) {
 		mockRepo := new(MockProductRepository)
 		svc := service.NewProductServiceImpl(mockRepo)
 
-		mockRepo.On("FindAll", mock.Anything, 100, 0).Return([]entities.ProductEntity{}, int64(0), nil)
+		mockRepo.On("FindAll", mock.Anything, 100, 0, payload.ProductFilter{}).Return([]entities.ProductEntity{}, int64(0), nil)
 
-		_, _, appErr := svc.List(context.Background(), -1, 200)
+		_, _, appErr := svc.List(context.Background(), -1, 200, payload.ProductFilter{})
 		assert.Nil(t, appErr)
 		mockRepo.AssertExpectations(t)
 	})
@@ -93,9 +93,9 @@ func TestProductService_List(t *testing.T) {
 		mockRepo := new(MockProductRepository)
 		svc := service.NewProductServiceImpl(mockRepo)
 
-		mockRepo.On("FindAll", mock.Anything, 10, 0).Return(nil, int64(0), errors.New("db connection lost"))
+		mockRepo.On("FindAll", mock.Anything, 10, 0, payload.ProductFilter{}).Return(nil, int64(0), errors.New("db connection lost"))
 
-		res, total, appErr := svc.List(context.Background(), 1, 10)
+		res, total, appErr := svc.List(context.Background(), 1, 10, payload.ProductFilter{})
 		assert.NotNil(t, appErr)
 		assert.Equal(t, 500, appErr.Code)
 		assert.Equal(t, int64(0), total)

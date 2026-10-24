@@ -46,10 +46,11 @@ type UpdateProductRequest struct {
 
 // ListProductsMeta carries pagination metadata.
 type ListProductsMeta struct {
-	Page       int   `json:"page"`
-	PerPage    int   `json:"per_page"`
-	Total      int64 `json:"total"`
-	TotalPages int   `json:"total_pages"`
+	Page       int            `json:"page"`
+	PerPage    int            `json:"per_page"`
+	Total      int64          `json:"total"`
+	TotalPages int            `json:"total_pages"`
+	Filters    *ProductFilter `json:"filters,omitempty"`
 }
 
 // ListProductsResponse is the paginated envelope for GET /products.
@@ -83,4 +84,27 @@ func NewProductResponses(list []entities.ProductEntity) []ProductResponse {
 		out = append(out, NewProductResponse(e))
 	}
 	return out
+}
+
+type ProductFilter struct {
+	Category string
+	MinPrice *float64
+	MaxPrice *float64
+	Search   string
+	Sort     string
+}
+
+func SortClause(sort string) string {
+	switch sort {
+	case "price_asc":
+		return "price ASC, id ASC"
+	case "price_desc":
+		return "price DESC, id ASC"
+	case "name_asc":
+		return "name ASC, id ASC"
+	case "newest":
+		return "createdAt DESC, id ASC"
+	default:
+		return "id ASC"
+	}
 }

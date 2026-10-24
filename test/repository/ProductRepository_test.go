@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"golang-restful-api/entities"
+	"golang-restful-api/payload"
 	"golang-restful-api/repository"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -48,8 +49,8 @@ func TestProductRepository_Create(t *testing.T) {
 	}
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `product` (`name`,`description`,`price`,`category`,`imageUrl`,`stock`,`rating`,`reviewCount`,`sku`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?)")).
-		WithArgs(product.Name, product.Description, product.Price, product.Category, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, sqlmock.AnyArg(), sqlmock.AnyArg()).
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `product` (`name`,`description`,`category`,`price`,`imageUrl`,`stock`,`rating`,`reviewCount`,`sku`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?)")).
+		WithArgs(product.Name, product.Description, product.Category, product.Price, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -78,10 +79,37 @@ func TestProductRepository_FindAll(t *testing.T) {
 			WithArgs(10).
 			WillReturnRows(productRows)
 
-		records, total, err := repo.FindAll(context.Background(), 10, 0)
+		records, total, err := repo.FindAll(context.Background(), 10, 0, payload.ProductFilter{})
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), total)
 		assert.Len(t, records, 2)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("Filters and sort", func(t *testing.T) {
+		gormDB, mock, sqlDB := setupMockDB(t)
+		defer sqlDB.Close()
+
+		repo := repository.NewProductRepositoryImpl(gormDB)
+
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM `product`")).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `product` WHERE category = ? AND price <= ? AND price >= ? AND (name LIKE ? OR sku LIKE ?) ORDER BY price ASC, id ASC LIMIT ? OFFSET ?")).
+			WithArgs("Electronics", 100.0, 10.0, "%mouse%", "%mouse%", 5, 10).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Gaming Mouse"))
+
+		minPrice, maxPrice := 10.0, 100.0
+		records, total, err := repo.FindAll(context.Background(), 5, 10, payload.ProductFilter{
+			Category: "Electronics",
+			MinPrice: &minPrice,
+			MaxPrice: &maxPrice,
+			Search:   "mouse",
+			Sort:     "price_asc",
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), total)
+		assert.Len(t, records, 1)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
@@ -94,7 +122,7 @@ func TestProductRepository_FindAll(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM `product`")).
 			WillReturnError(errors.New("db error"))
 
-		records, total, err := repo.FindAll(context.Background(), 10, 0)
+		records, total, err := repo.FindAll(context.Background(), 10, 0, payload.ProductFilter{})
 		assert.Error(t, err)
 		assert.Equal(t, int64(0), total)
 		assert.Nil(t, records)
@@ -161,8 +189,8 @@ func TestProductRepository_Update(t *testing.T) {
 	}
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE `product` SET `name`=?,`description`=?,`price`=?,`category`=?,`imageUrl`=?,`stock`=?,`rating`=?,`reviewCount`=?,`sku`=?,`createdAt`=?,`updatedAt`=? WHERE `id` = ?")).
-		WithArgs(product.Name, product.Description, product.Price, product.Category, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, sqlmock.AnyArg(), sqlmock.AnyArg(), product.ID).
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE `product` SET `name`=?,`description`=?,`category`=?,`price`=?,`imageUrl`=?,`stock`=?,`rating`=?,`reviewCount`=?,`sku`=?,`createdAt`=?,`updatedAt`=? WHERE `id` = ?")).
+		WithArgs(product.Name, product.Description, product.Category, product.Price, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, sqlmock.AnyArg(), sqlmock.AnyArg(), product.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
