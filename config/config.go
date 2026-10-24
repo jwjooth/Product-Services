@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang-restful-api/entities"
@@ -15,24 +16,36 @@ import (
 
 // Config holds all application configuration loaded from environment.
 type Config struct {
-	AppPort    string
-	DBUser     string
-	DBPassword string
-	DBHost     string
-	DBPort     string
-	DBName     string
+	AppPort            string
+	DBUser             string
+	DBPassword         string
+	DBHost             string
+	DBPort             string
+	DBName             string
+	CORSAllowedOrigins []string
+	CORSAllowedMethods []string
+	CORSAllowedHeaders []string
+	CORSMaxAge         int
 }
 
 // Load reads configuration from environment variables with sane defaults.
 // Missing .env file is NOT fatal; env vars / platform defaults are used.
 func Load() Config {
 	return Config{
-		AppPort:    getEnv("APP_PORT", "6767"),
-		DBUser:     getEnv("DB_USER", "root"),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "3306"),
-		DBName:     getEnv("DB_NAME", "products"),
+		AppPort:            getEnv("APP_PORT", "6767"),
+		DBUser:             getEnv("DB_USER", "root"),
+		DBPassword:         getEnv("DB_PASSWORD", ""),
+		DBHost:             getEnv("DB_HOST", "localhost"),
+		DBPort:             getEnv("DB_PORT", "3306"),
+		DBName:             getEnv("DB_NAME", "products"),
+		CORSAllowedOrigins: getEnvList("CORS_ALLOWED_ORIGINS", []string{"*"}),
+		CORSMaxAge:         getEnvInt("CORS_MAX_AGE", 300),
+		CORSAllowedHeaders: getEnvList("CORS_ALLOWED_HEADERS", []string{
+			"Accept",
+			"Content-Type",
+			"Authorization",
+			"X-Request-Id",
+		}),
 	}
 }
 
@@ -102,4 +115,20 @@ func getEnvInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+func getEnvList(key string, fallback []string) []string {
+	if v := os.Getenv(key); v != "" {
+		return fallback
+	}
+	var result []string
+	for item := range strings.SplitSeq(os.Getenv(key), ",") {
+		if cleaned := strings.TrimSpace(item); cleaned != "" {
+			result = append(result, cleaned)
+		}
+	}
+	if len(result) == 0 {
+		return fallback
+	}
+	return result
 }

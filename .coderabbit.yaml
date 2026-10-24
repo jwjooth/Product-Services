@@ -1,12 +1,6 @@
-tone_instructions: |
-  Keep reviews concise and direct. Focus on actionable issues in logic,
-  security, performance, and error handling. Skip routine style feedback
-  covered by linters. Suggest a concrete fix when possible.
+tone_instructions: "Pragmatic lead review: flag only concrete, actionable defects affecting correctness, security, data integrity, or error handling. State impact and the smallest fix. Skip style, speculation, unrelated changes, and needless complexity."
 
 reviews:
   profile: chill
-  # 1. Izinkan bot menyetujui otomatis jika tidak ada bug kritis
   auto_approve_if_clean: true
-  
-  # 2. AKTIFKAN INI agar perintah @coderabbitai approve/resolve berfungsi
   request_changes_workflow: true

@@ -2,6 +2,7 @@ package helper
 
 import (
 	"encoding/json"
+	"golang-restful-api/payload"
 	"net/http"
 	"strconv"
 
@@ -13,6 +14,12 @@ type SuccessEnvelope struct {
 	Message string `json:"message"`
 	Data    any    `json:"data,omitempty"`
 	Meta    any    `json:"meta,omitempty"`
+}
+
+type ProductListEnvelope struct {
+	Message string                    `json:"message"`
+	Data    []payload.ProductResponse `json:"data"`
+	Meta    payload.ListProductsMeta  `json:"meta"`
 }
 
 // ErrorEnvelope is the standard error body.

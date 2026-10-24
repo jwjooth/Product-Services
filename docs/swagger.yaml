@@ -5,54 +5,12 @@ definitions:
       error:
         type: string
     type: object
-  payload.BookRequest:
+  helper.SuccessEnvelope:
     properties:
-      author:
+      data: {}
+      message:
         type: string
-      category_id:
-        type: integer
-      stock:
-        type: integer
-      title:
-        type: string
-    required:
-    - author
-    - category_id
-    - stock
-    - title
-    type: object
-  payload.BookResponse:
-    properties:
-      author:
-        type: string
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: integer
-      stock:
-        type: integer
-      title:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  payload.CategoryRequest:
-    properties:
-      name:
-        type: string
-    type: object
-  payload.CategoryResponse:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
+      meta: {}
     type: object
   payload.CreateProductRequest:
     properties:
@@ -79,26 +37,7 @@ definitions:
     required:
     - name
     - price
-    type: object
-  payload.ListBookMeta:
-    properties:
-      page:
-        type: integer
-      per_page:
-        type: integer
-      total:
-        type: integer
-      total_page:
-        type: integer
-    type: object
-  payload.ListBookResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/payload.BookResponse'
-        type: array
-      meta:
-        $ref: '#/definitions/payload.ListBookMeta'
+    - sku
     type: object
   payload.ListProductsMeta:
     properties:
@@ -110,40 +49,6 @@ definitions:
         type: integer
       total_pages:
         type: integer
-    type: object
-  payload.ListProductsResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/payload.ProductResponse'
-        type: array
-      meta:
-        $ref: '#/definitions/payload.ListProductsMeta'
-    type: object
-  payload.ProductCategoryRequest:
-    properties:
-      code:
-        maxLength: 2
-        minLength: 2
-        type: string
-      name:
-        type: string
-    required:
-    - code
-    - name
-    type: object
-  payload.ProductCategoryResponse:
-    properties:
-      code:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
     type: object
   payload.ProductResponse:
     properties:
@@ -197,481 +102,69 @@ definitions:
     required:
     - name
     - price
+    - sku
     type: object
 info:
   contact: {}
-  description: API documentation for the Golang RESTful API with Product, Book, Category,
-    and ProductCategory CRUD operations
+  description: API documentation for the Golang Product RESTful API
   title: Golang RESTful API
   version: 1.0.0
 paths:
-  /books:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a paginated list of all books
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Items per page
-        in: query
-        name: per_page
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/payload.ListBookResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - book
-    post:
-      consumes:
-      - application/json
-      description: Create a new book with the provided details
-      parameters:
-      - description: Book request payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/payload.BookRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/payload.BookResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - book
-  /books/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a book by its unique ID
-      parameters:
-      - description: Book ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - book
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a single book by its unique ID
-      parameters:
-      - description: Book ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/payload.BookResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - book
-    put:
-      consumes:
-      - application/json
-      description: Update an existing book by its ID with the provided details
-      parameters:
-      - description: Book ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Book update payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/payload.BookRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/payload.BookResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - book
-  /categories:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve all categories
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/payload.CategoryResponse'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - category
-    post:
-      consumes:
-      - application/json
-      description: Create a new category with the provided details
-      parameters:
-      - description: Category request payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/payload.CategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/payload.CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - category
-  /categories/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a category by its unique ID
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - category
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a single category by its unique ID
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/payload.CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - category
-    put:
-      consumes:
-      - application/json
-      description: Update an existing category by its ID with the provided details
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Category update payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/payload.CategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/payload.CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - category
-  /product-categories:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a list of all product categories
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/payload.ProductCategoryResponse'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - product-category
-    post:
-      consumes:
-      - application/json
-      description: Create a new product category with the provided details
-      parameters:
-      - description: Product category request payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/payload.ProductCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/payload.ProductCategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - product-category
-  /product-categories/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a product category by its unique ID
-      parameters:
-      - description: Product Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - product-category
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a single product category by its unique ID
-      parameters:
-      - description: Product Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/payload.ProductCategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - product-category
-    put:
-      consumes:
-      - application/json
-      description: Update an existing product category by its ID with the provided
-        details
-      parameters:
-      - description: Product Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Product category update payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/payload.ProductCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/payload.ProductCategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helper.ErrorEnvelope'
-      tags:
-      - product-category
-  /products:
+  /api/v1/products:
     get:
       consumes:
       - application/json
       description: Retrieve a paginated list of all products
       parameters:
-      - description: Page number
+      - default: 1
+        description: Page number (1-based)
         in: query
+        minimum: 1
         name: page
         type: integer
-      - description: Items per page
+      - default: 10
+        description: Items per page (max 100)
         in: query
+        maximum: 100
+        minimum: 1
         name: per_page
         type: integer
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      - description: Minimum price
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum price
+        in: query
+        name: max_price
+        type: number
+      - description: Search query (name or SKU)
+        in: query
+        name: q
+        type: string
+      - description: 'Sort order: price_asc, price_desc, name_asc, newest'
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/payload.ListProductsResponse'
+            allOf:
+            - $ref: '#/definitions/helper.SuccessEnvelope'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/payload.ProductResponse'
+                  type: array
+                Meta:
+                  $ref: '#/definitions/payload.ListProductsMeta'
+              type: object
         "500":
           description: Internal Server Error
           schema:
@@ -695,7 +188,12 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/payload.ProductResponse'
+            allOf:
+            - $ref: '#/definitions/helper.SuccessEnvelope'
+            - properties:
+                Data:
+                  $ref: '#/definitions/payload.ProductResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -706,7 +204,7 @@ paths:
             $ref: '#/definitions/helper.ErrorEnvelope'
       tags:
       - product
-  /products/{id}:
+  /api/v1/products/{id}:
     delete:
       consumes:
       - application/json
@@ -723,9 +221,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/helper.SuccessEnvelope'
         "400":
           description: Bad Request
           schema:
@@ -756,7 +252,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/payload.ProductResponse'
+            allOf:
+            - $ref: '#/definitions/helper.SuccessEnvelope'
+            - properties:
+                Data:
+                  $ref: '#/definitions/payload.ProductResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -789,7 +290,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/payload.ProductResponse'
+            allOf:
+            - $ref: '#/definitions/helper.SuccessEnvelope'
+            - properties:
+                Data:
+                  $ref: '#/definitions/payload.ProductResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
