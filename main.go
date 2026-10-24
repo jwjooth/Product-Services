@@ -69,7 +69,7 @@ func main() {
 		AllowedHeaders:   cfg.CORSAllowedHeaders,
 		ExposedHeaders:   []string{"X-Request-Id"},
 		MaxAge:           cfg.CORSMaxAge,
-		AllowCredentials: true,
+		AllowCredentials: len(cfg.CORSAllowedOrigins) == 1 && cfg.CORSAllowedOrigins[0] != "*",
 	}))
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
