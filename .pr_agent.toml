@@ -1,0 +1,24 @@
+
+[config]
+model = "gemini/gemini-2.0-flash"
+fallback_models = ["openai/gpt-4o-mini"]
+
+[pr_reviewer]
+extra_instructions = """
+Review this Go + Chi REST API from a backend correctness perspective.
+
+Prioritize:
+- HTTP request validation and JSON decoding.
+- Authentication and authorization boundaries, if present.
+- SQL/GORM query correctness and transaction integrity.
+- Data consistency, nil handling, and error propagation.
+- API contract compatibility and meaningful tests.
+
+Avoid generic style feedback.
+Do not repeat findings about readability or general code quality
+unless there is a concrete correctness or security impact.
+For each finding, state the evidence, impact, and suggested fix.
+"""
+
+[pr_code_suggestions]
+num_code_suggestions_per_chunk = 0

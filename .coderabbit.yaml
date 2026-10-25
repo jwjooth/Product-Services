@@ -1,6 +1,22 @@
-tone_instructions: "Pragmatic lead review: flag only concrete, actionable defects affecting correctness, security, data integrity, or error handling. State impact and the smallest fix. Skip style, speculation, unrelated changes, and needless complexity."
+
+language: en-US
 
 reviews:
   profile: chill
-  auto_approve_if_clean: true
-  request_changes_workflow: true
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  poem: false
+
+  instructions: |
+    Review this Go REST API built with Chi, GORM, and MySQL.
+
+    Focus on:
+    - Bugs and regressions introduced by the PR.
+    - Incorrect HTTP status codes and response envelopes.
+    - Error handling and resource cleanup.
+    - Race conditions and transaction correctness.
+
+    Keep findings specific to the changed code.
+    Do not report style-only issues unless they affect correctness.
+    Avoid speculative findings. Explain concrete impact.
