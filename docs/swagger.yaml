@@ -41,6 +41,8 @@ definitions:
     type: object
   payload.ListProductsMeta:
     properties:
+      filters:
+        $ref: '#/definitions/payload.ProductFilter'
       page:
         type: integer
       per_page:
@@ -49,6 +51,19 @@ definitions:
         type: integer
       total_pages:
         type: integer
+    type: object
+  payload.ProductFilter:
+    properties:
+      category:
+        type: string
+      maxPrice:
+        type: number
+      minPrice:
+        type: number
+      search:
+        type: string
+      sort:
+        type: string
     type: object
   payload.ProductResponse:
     properties:
@@ -185,17 +200,6 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/helper.SuccessEnvelope'
-            - properties:
-                Data:
-                  items:
-                    $ref: '#/definitions/payload.ProductResponse'
-                  type: array
-              type: object
         "201":
           description: Created
           schema:

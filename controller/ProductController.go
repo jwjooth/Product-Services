@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"golang-restful-api/helper"
@@ -113,7 +112,7 @@ func (c *productController) GetProductByID(w http.ResponseWriter, r *http.Reques
 // @Success 201 {object} helper.SuccessEnvelope{Data=payload.ProductResponse}
 func (c *productController) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req payload.CreateProductRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := helper.DecodeJSONStrict(r, &req); err != nil {
 		helper.WriteError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
 	}
@@ -144,7 +143,7 @@ func (c *productController) UpdateProduct(w http.ResponseWriter, r *http.Request
 		return
 	}
 	var req payload.UpdateProductRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := helper.DecodeJSONStrict(r, &req); err != nil {
 		helper.WriteError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
 	}

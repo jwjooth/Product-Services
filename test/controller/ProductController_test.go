@@ -208,6 +208,33 @@ func TestProductController_CreateProduct(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
+	t.Run("Unknown JSON field", func(t *testing.T) {
+		svc := new(MockProductService)
+		ctrl := controller.NewProductController(svc)
+		router := setupProductRouter(ctrl)
+
+		req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader([]byte(`{"name":"Monitor","price":300,"stock":4,"sku":"MON001","unknown_prop":"hack"}`)))
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), `unknown field`)
+		assert.Contains(t, rec.Body.String(), `unknown_prop`)
+	})
+
+	t.Run("Multiple JSON values in body", func(t *testing.T) {
+		svc := new(MockProductService)
+		ctrl := controller.NewProductController(svc)
+		router := setupProductRouter(ctrl)
+
+		req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader([]byte(`{"name":"Monitor","price":300,"stock":4,"sku":"MON001"}{"extra":1}`)))
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "multiple JSON values")
+	})
+
 	t.Run("Service validation error", func(t *testing.T) {
 		svc := new(MockProductService)
 		ctrl := controller.NewProductController(svc)
@@ -267,6 +294,20 @@ func TestProductController_UpdateProduct(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("Unknown JSON field", func(t *testing.T) {
+		svc := new(MockProductService)
+		ctrl := controller.NewProductController(svc)
+		router := setupProductRouter(ctrl)
+
+		req := httptest.NewRequest(http.MethodPut, "/products/1", bytes.NewReader([]byte(`{"name":"Monitor","price":300,"stock":4,"sku":"MON001","unknown_prop":"hack"}`)))
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), `unknown field`)
+		assert.Contains(t, rec.Body.String(), `unknown_prop`)
 	})
 }
 
