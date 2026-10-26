@@ -132,27 +132,6 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/helper.SuccessEnvelope"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "Data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/payload.ProductResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
                     "201": {
                         "description": "Created",
                         "schema": {
@@ -416,6 +395,9 @@ const docTemplate = `{
         "payload.ListProductsMeta": {
             "type": "object",
             "properties": {
+                "filters": {
+                    "$ref": "#/definitions/payload.ProductFilter"
+                },
                 "page": {
                     "type": "integer"
                 },
@@ -427,6 +409,26 @@ const docTemplate = `{
                 },
                 "total_pages": {
                     "type": "integer"
+                }
+            }
+        },
+        "payload.ProductFilter": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "maxPrice": {
+                    "type": "number"
+                },
+                "minPrice": {
+                    "type": "number"
+                },
+                "search": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "string"
                 }
             }
         },
