@@ -57,8 +57,10 @@ definitions:
       category:
         type: string
       maxPrice:
+        format: float64
         type: number
       minPrice:
+        format: float64
         type: number
       search:
         type: string

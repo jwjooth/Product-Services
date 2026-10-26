@@ -419,10 +419,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "maxPrice": {
-                    "type": "number"
+                    "type": "number",
+                    "format": "float64"
                 },
                 "minPrice": {
-                    "type": "number"
+                    "type": "number",
+                    "format": "float64"
                 },
                 "search": {
                     "type": "string"
