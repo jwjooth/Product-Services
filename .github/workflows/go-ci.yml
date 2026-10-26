@@ -116,18 +116,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
           CONFIG.MODEL: gemini/gemini-2.0-flash
-
-  deploy:
-    needs: [build, lint]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Install Railway CLI
-        run: npm i -g @railway/cli
-
-      - name: Deploy to Railway
-        run: railway up --service Product-CRUD-API --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
