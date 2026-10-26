@@ -327,4 +327,10 @@ paths:
             $ref: '#/definitions/helper.ErrorEnvelope'
       tags:
       - product
+securityDefinitions:
+  AdminAPIKey:
+    description: Provide the admin API key as a Bearer token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

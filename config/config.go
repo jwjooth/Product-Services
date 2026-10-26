@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -26,6 +27,7 @@ type Config struct {
 	CORSAllowedMethods []string
 	CORSAllowedHeaders []string
 	CORSMaxAge         int
+	AdminAPIKey        string
 }
 
 // Load reads configuration from environment variables with sane defaults.
@@ -45,8 +47,10 @@ func Load() Config {
 			"Content-Type",
 			"Authorization",
 			"X-Request-Id",
+			"X-Admin-Key",
 		}),
 		CORSAllowedMethods: getEnvList("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		AdminAPIKey:        getEnv("ADMIN_API_KEY", ""),
 	}
 }
 
@@ -132,4 +136,14 @@ func getEnvList(key string, fallback []string) []string {
 		return result
 	}
 	return fallback
+}
+
+func (c Config) ValidateAuth() error {
+	if c.AdminAPIKey == "" {
+		return errors.New("ADMIN_API_KEY is required")
+	}
+	if len(c.AdminAPIKey) < 32 {
+		return errors.New("ADMIN_API_KEY must be at least 32 characters")
+	}
+	return nil
 }
