@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"golang-restful-api/auth"
 	"golang-restful-api/docs"
 	"log"
 	"net/http"
@@ -32,6 +33,10 @@ import (
 // @version 1.0.0
 // @description API documentation for the Golang Product RESTful API
 // @BasePath /api/v1
+// @securityDefinitions.apikey AdminAPIKey
+// @in header
+// @name Authorization
+// @description Provide the admin API key as a Bearer token.
 func main() {
 	// .env is optional: missing file must not crash production.
 	_ = godotenv.Load()
@@ -47,6 +52,9 @@ func main() {
 	}
 
 	cfg := config.Load()
+	if err := cfg.ValidateAuth(); err != nil {
+		log.Fatalf("invalid configuration: %v", err)
+	}
 
 	db, err := config.OpenDB(cfg)
 	if err != nil {
@@ -87,10 +95,10 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/products", func(r chi.Router) {
 			r.Get("/", productController.ListProducts)
-			r.Post("/", productController.CreateProduct)
 			r.Get("/{id}", productController.GetProductByID)
-			r.Put("/{id}", productController.UpdateProduct)
-			r.Delete("/{id}", productController.DeleteProduct)
+			r.With(auth.APIKeyAuth(cfg.AdminAPIKey)).Post("/", productController.CreateProduct)
+			r.With(auth.APIKeyAuth(cfg.AdminAPIKey)).Put("/{id}", productController.UpdateProduct)
+			r.With(auth.APIKeyAuth(cfg.AdminAPIKey)).Delete("/{id}", productController.DeleteProduct)
 		})
 	})
 

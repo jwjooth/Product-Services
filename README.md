@@ -12,7 +12,9 @@ A simple product CRUD API built with Go, Chi, GORM, and MySQL.
 
 Requirements: Go 1.26.5+ and MySQL.
 
-Set your database connection using `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`. Defaults are `localhost:3306`, user `root`, and database `products`.
+Set your database connection using `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`. Defaults are `localhost:3306`, user `root`, and database `products`. Set `ADMIN_API_KEY` to an admin key with at least 32 characters.
+
+POST, PUT, and DELETE product endpoints require either `X-Admin-Key: <ADMIN_API_KEY>` or `Authorization: Bearer <ADMIN_API_KEY>`.
 
 ```bash
 go run .

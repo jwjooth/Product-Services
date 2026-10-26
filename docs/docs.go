@@ -512,6 +512,14 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "AdminAPIKey": {
+            "description": "Provide the admin API key as a Bearer token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 

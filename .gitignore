@@ -5,5 +5,3 @@
 *.out
 bin/
 dist/
-*.http
-AGENTS.md
