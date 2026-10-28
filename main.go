@@ -62,7 +62,7 @@ func main() {
 	}
 	defer config.CloseDB(db)
 
-	if err := config.Migrate(db); err != nil {
+	if err := config.Migrate(db, cfg); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 
