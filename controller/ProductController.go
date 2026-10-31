@@ -35,8 +35,8 @@ func NewProductController(svc service.ProductService) ProductController {
 // @Param page query int false "Page number (1-based)" minimum(1) default(1)
 // @Param per_page query int false "Items per page (max 100)" minimum(1) maximum(100) default(10)
 // @Param category query string false "Filter by category"
-// @Param min_price query number false "Minimum price"
-// @Param max_price query number false "Maximum price"
+// @Param min_price query integer false "Minimum price in cents (e.g. 1999 for $19.99)"
+// @Param max_price query integer false "Maximum price in cents (e.g. 2999 for $29.99)"
 // @Param q query string false "Search query (name or SKU)"
 // @Param sort query string false "Sort order: price_asc, price_desc, name_asc, newest"
 // @Success 200 {object} helper.SuccessEnvelope{Data=[]payload.ProductResponse,Meta=payload.ListProductsMeta}
@@ -50,10 +50,10 @@ func (c *productController) ListProducts(w http.ResponseWriter, r *http.Request)
 		Search:   helper.QueryString(r, "q"),
 		Sort:     helper.QueryString(r, "sort"),
 	}
-	if v, ok := helper.QueryFloat(r, "max_price"); ok {
+	if v, ok := helper.QueryInt64(r, "max_price"); ok {
 		filter.MaxPrice = &v
 	}
-	if v, ok := helper.QueryFloat(r, "min_price"); ok {
+	if v, ok := helper.QueryInt64(r, "min_price"); ok {
 		filter.MinPrice = &v
 	}
 

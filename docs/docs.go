@@ -52,14 +52,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "number",
-                        "description": "Minimum price",
+                        "type": "integer",
+                        "description": "Minimum price in cents (e.g. 1999 for $19.99)",
                         "name": "min_price",
                         "in": "query"
                     },
                     {
-                        "type": "number",
-                        "description": "Maximum price",
+                        "type": "integer",
+                        "description": "Maximum price in cents (e.g. 2999 for $29.99)",
                         "name": "max_price",
                         "in": "query"
                     },
@@ -380,7 +380,7 @@ const docTemplate = `{
                     "minLength": 1
                 },
                 "price": {
-                    "type": "number"
+                    "$ref": "#/definitions/payload.Price"
                 },
                 "sku": {
                     "type": "string",
@@ -412,6 +412,9 @@ const docTemplate = `{
                 }
             }
         },
+        "payload.Price": {
+            "type": "object"
+        },
         "payload.ProductFilter": {
             "type": "object",
             "properties": {
@@ -419,12 +422,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "maxPrice": {
-                    "type": "number",
-                    "format": "float64"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "minPrice": {
-                    "type": "number",
-                    "format": "float64"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "search": {
                     "type": "string"
@@ -456,7 +459,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "price": {
-                    "type": "number"
+                    "$ref": "#/definitions/payload.Price"
                 },
                 "rating": {
                     "type": "number"
@@ -500,7 +503,7 @@ const docTemplate = `{
                     "minLength": 1
                 },
                 "price": {
-                    "type": "number"
+                    "$ref": "#/definitions/payload.Price"
                 },
                 "sku": {
                     "type": "string",
@@ -525,7 +528,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0.0",
+	Version:          "1.2.0",
 	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},

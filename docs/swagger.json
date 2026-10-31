@@ -4,7 +4,7 @@
         "description": "API documentation for the Golang Product RESTful API",
         "title": "Golang RESTful API",
         "contact": {},
-        "version": "1.0.0"
+        "version": "1.2.0"
     },
     "basePath": "/api/v1",
     "paths": {
@@ -45,14 +45,14 @@
                         "in": "query"
                     },
                     {
-                        "type": "number",
-                        "description": "Minimum price",
+                        "type": "integer",
+                        "description": "Minimum price in cents (e.g. 1999 for $19.99)",
                         "name": "min_price",
                         "in": "query"
                     },
                     {
-                        "type": "number",
-                        "description": "Maximum price",
+                        "type": "integer",
+                        "description": "Maximum price in cents (e.g. 2999 for $29.99)",
                         "name": "max_price",
                         "in": "query"
                     },
@@ -373,7 +373,7 @@
                     "minLength": 1
                 },
                 "price": {
-                    "type": "number"
+                    "$ref": "#/definitions/payload.Price"
                 },
                 "sku": {
                     "type": "string",
@@ -405,6 +405,9 @@
                 }
             }
         },
+        "payload.Price": {
+            "type": "object"
+        },
         "payload.ProductFilter": {
             "type": "object",
             "properties": {
@@ -412,12 +415,12 @@
                     "type": "string"
                 },
                 "maxPrice": {
-                    "type": "number",
-                    "format": "float64"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "minPrice": {
-                    "type": "number",
-                    "format": "float64"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "search": {
                     "type": "string"
@@ -449,7 +452,7 @@
                     "type": "string"
                 },
                 "price": {
-                    "type": "number"
+                    "$ref": "#/definitions/payload.Price"
                 },
                 "rating": {
                     "type": "number"
@@ -493,7 +496,7 @@
                     "minLength": 1
                 },
                 "price": {
-                    "type": "number"
+                    "$ref": "#/definitions/payload.Price"
                 },
                 "sku": {
                     "type": "string",

@@ -64,8 +64,8 @@ func TestProductService_List(t *testing.T) {
 		svc := service.NewProductServiceImpl(mockRepo)
 
 		expectedList := []entities.ProductEntity{
-			{ID: 1, Name: "Product 1", Price: 100, Stock: 10, Category: "Electronics", ImageUrl: "img1.jpg", SKU: "SKU001", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: 2, Name: "Product 2", Price: 200, Stock: 5, Category: "Home", ImageUrl: "img2.jpg", SKU: "SKU002", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: 1, Name: "Product 1", PriceCents: 10000, Stock: 10, Category: "Electronics", ImageUrl: "img1.jpg", SKU: "SKU001", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: 2, Name: "Product 2", PriceCents: 20000, Stock: 5, Category: "Home", ImageUrl: "img2.jpg", SKU: "SKU002", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		}
 
 		mockRepo.On("FindAll", mock.Anything, 10, 0, payload.ProductFilter{}).Return(expectedList, int64(2), nil)
@@ -110,7 +110,7 @@ func TestProductService_GetByID(t *testing.T) {
 		mockRepo := new(MockProductRepository)
 		svc := service.NewProductServiceImpl(mockRepo)
 
-		entity := &entities.ProductEntity{ID: 1, Name: "Gadget", Price: 50, Stock: 2, Category: "Electronics", ImageUrl: "img.jpg", SKU: "SKU001"}
+		entity := &entities.ProductEntity{ID: 1, Name: "Gadget", PriceCents: 5000, Stock: 2, Category: "Electronics", ImageUrl: "img.jpg", SKU: "SKU001"}
 		mockRepo.On("FindByID", mock.Anything, uint(1)).Return(entity, nil)
 
 		res, appErr := svc.GetByID(context.Background(), 1)
@@ -165,7 +165,7 @@ func TestProductService_Create(t *testing.T) {
 		req := payload.CreateProductRequest{
 			Name:        "New Phone",
 			Description: "Smartphone",
-			Price:       999.99,
+			Price:       payload.Price{Cents: 99999},
 			Stock:       15,
 			Category:    "Electronics",
 			ImageUrl:    "https://example.com/phone.jpg",
@@ -176,7 +176,7 @@ func TestProductService_Create(t *testing.T) {
 			ID:          10,
 			Name:        req.Name,
 			Description: req.Description,
-			Price:       req.Price,
+			PriceCents:  req.Price.Cents,
 			Stock:       req.Stock,
 			Category:    req.Category,
 			ImageUrl:    req.ImageUrl,
@@ -184,7 +184,7 @@ func TestProductService_Create(t *testing.T) {
 		}
 
 		mockRepo.On("Create", mock.Anything, mock.MatchedBy(func(p *entities.ProductEntity) bool {
-			return p.Name == req.Name && p.Price == req.Price && p.Category == req.Category
+			return p.Name == req.Name && p.PriceCents == req.Price.Cents && p.Category == req.Category
 		})).Return(createdEntity, nil)
 
 		res, appErr := svc.Create(context.Background(), req)
@@ -202,7 +202,7 @@ func TestProductService_Create(t *testing.T) {
 		req := payload.CreateProductRequest{
 			Name:        "",
 			Description: "Smartphone",
-			Price:       999.99,
+			Price:       payload.Price{Cents: 99999},
 			Stock:       15,
 			Category:    "Electronics",
 			ImageUrl:    "https://example.com/phone.jpg",
@@ -220,8 +220,9 @@ func TestProductService_Create(t *testing.T) {
 
 		req := payload.CreateProductRequest{
 			Name:  "Test",
-			Price: 0,
+			Price: payload.Price{Cents: 0},
 			Stock: 5,
+			SKU:   "SKU001",
 		}
 
 		_, appErr := svc.Create(context.Background(), req)
@@ -235,7 +236,7 @@ func TestProductService_Create(t *testing.T) {
 
 		req := payload.CreateProductRequest{
 			Name:  "Test",
-			Price: 100,
+			Price: payload.Price{Cents: 10000},
 			Stock: -1,
 		}
 
@@ -250,7 +251,7 @@ func TestProductService_Create(t *testing.T) {
 
 		req := payload.CreateProductRequest{
 			Name:  "Test",
-			Price: 100,
+			Price: payload.Price{Cents: 10000},
 			Stock: 5,
 		}
 
@@ -267,7 +268,7 @@ func TestProductService_Create(t *testing.T) {
 
 		req := payload.CreateProductRequest{
 			Name:  "Test Item",
-			Price: 10,
+			Price: payload.Price{Cents: 1000},
 			Stock: 1,
 			SKU:   "ITEM001",
 		}
@@ -290,15 +291,15 @@ func TestProductService_Update(t *testing.T) {
 		req := payload.UpdateProductRequest{
 			Name:        "Updated Keyboard",
 			Description: "Mechanical",
-			Price:       120,
+			Price:       payload.Price{Cents: 12000},
 			Stock:       8,
 			Category:    "Accessories",
 			ImageUrl:    "https://example.com/keyboard.jpg",
 			SKU:         "KB001",
 		}
 
-		existing := &entities.ProductEntity{ID: 1, Name: "Old Keyboard", Price: 100, Stock: 5, Category: "Accessories", ImageUrl: "old.jpg", SKU: "KBold"}
-		updated := &entities.ProductEntity{ID: 1, Name: req.Name, Description: req.Description, Price: req.Price, Stock: req.Stock, Category: req.Category, ImageUrl: req.ImageUrl, SKU: req.SKU}
+		existing := &entities.ProductEntity{ID: 1, Name: "Old Keyboard", PriceCents: 10000, Stock: 5, Category: "Accessories", ImageUrl: "old.jpg", SKU: "KBold"}
+		updated := &entities.ProductEntity{ID: 1, Name: req.Name, Description: req.Description, PriceCents: req.Price.Cents, Stock: req.Stock, Category: req.Category, ImageUrl: req.ImageUrl, SKU: req.SKU}
 
 		mockRepo.On("FindByID", mock.Anything, uint(1)).Return(existing, nil)
 		mockRepo.On("Update", mock.Anything, existing).Return(updated, nil)
@@ -306,7 +307,7 @@ func TestProductService_Update(t *testing.T) {
 		res, appErr := svc.Update(context.Background(), 1, req)
 		assert.Nil(t, appErr)
 		assert.Equal(t, "Updated Keyboard", res.Name)
-		assert.Equal(t, 120.0, res.Price)
+		assert.Equal(t, payload.Price{Cents: 12000}, res.Price)
 		assert.Equal(t, "Accessories", res.Category)
 		mockRepo.AssertExpectations(t)
 	})
@@ -315,7 +316,7 @@ func TestProductService_Update(t *testing.T) {
 		mockRepo := new(MockProductRepository)
 		svc := service.NewProductServiceImpl(mockRepo)
 
-		_, appErr := svc.Update(context.Background(), 0, payload.UpdateProductRequest{Name: "Item", Price: 10, Stock: 1})
+		_, appErr := svc.Update(context.Background(), 0, payload.UpdateProductRequest{Name: "Item", Price: payload.Price{Cents: 1000}, Stock: 1})
 		assert.NotNil(t, appErr)
 		assert.Equal(t, 400, appErr.Code)
 	})
@@ -324,7 +325,7 @@ func TestProductService_Update(t *testing.T) {
 		mockRepo := new(MockProductRepository)
 		svc := service.NewProductServiceImpl(mockRepo)
 
-		_, appErr := svc.Update(context.Background(), 1, payload.UpdateProductRequest{Name: "", Price: 10})
+		_, appErr := svc.Update(context.Background(), 1, payload.UpdateProductRequest{Name: "", Price: payload.Price{Cents: 1000}})
 		assert.NotNil(t, appErr)
 		assert.Equal(t, 400, appErr.Code)
 	})
@@ -335,7 +336,7 @@ func TestProductService_Update(t *testing.T) {
 
 		req := payload.UpdateProductRequest{
 			Name:  "Item",
-			Price: 10,
+			Price: payload.Price{Cents: 1000},
 			Stock: 1,
 		}
 
@@ -351,7 +352,7 @@ func TestProductService_Update(t *testing.T) {
 		mockRepo := new(MockProductRepository)
 		svc := service.NewProductServiceImpl(mockRepo)
 
-		req := payload.UpdateProductRequest{Name: "Item", Price: 10, Stock: 1, SKU: "ITEM001"}
+		req := payload.UpdateProductRequest{Name: "Item", Price: payload.Price{Cents: 1000}, Stock: 1, SKU: "ITEM001"}
 		mockRepo.On("FindByID", mock.Anything, uint(2)).Return(nil, repository.ErrNotFound)
 
 		_, appErr := svc.Update(context.Background(), 2, req)
@@ -364,8 +365,8 @@ func TestProductService_Update(t *testing.T) {
 		mockRepo := new(MockProductRepository)
 		svc := service.NewProductServiceImpl(mockRepo)
 
-		req := payload.UpdateProductRequest{Name: "Item", Price: 10, Stock: 1, SKU: "ITEM001"}
-		existing := &entities.ProductEntity{ID: 1, Name: "Item", Price: 10, Stock: 1}
+		req := payload.UpdateProductRequest{Name: "Item", Price: payload.Price{Cents: 1000}, Stock: 1, SKU: "ITEM001"}
+		existing := &entities.ProductEntity{ID: 1, Name: "Item", PriceCents: 1000, Stock: 1}
 		mockRepo.On("FindByID", mock.Anything, uint(1)).Return(existing, nil)
 		mockRepo.On("Update", mock.Anything, existing).Return(nil, errors.New("db update error"))
 
