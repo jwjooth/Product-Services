@@ -27,7 +27,7 @@ definitions:
         minLength: 1
         type: string
       price:
-        type: number
+        $ref: '#/definitions/payload.Price'
       sku:
         maxLength: 50
         type: string
@@ -52,16 +52,18 @@ definitions:
       total_pages:
         type: integer
     type: object
+  payload.Price:
+    type: object
   payload.ProductFilter:
     properties:
       category:
         type: string
       maxPrice:
-        format: float64
-        type: number
+        format: int64
+        type: integer
       minPrice:
-        format: float64
-        type: number
+        format: int64
+        type: integer
       search:
         type: string
       sort:
@@ -82,7 +84,7 @@ definitions:
       name:
         type: string
       price:
-        type: number
+        $ref: '#/definitions/payload.Price'
       rating:
         type: number
       reviewCount:
@@ -109,7 +111,7 @@ definitions:
         minLength: 1
         type: string
       price:
-        type: number
+        $ref: '#/definitions/payload.Price'
       sku:
         maxLength: 50
         type: string
@@ -125,7 +127,7 @@ info:
   contact: {}
   description: API documentation for the Golang Product RESTful API
   title: Golang RESTful API
-  version: 1.0.0
+  version: 1.2.0
 paths:
   /api/v1/products:
     get:
@@ -150,14 +152,14 @@ paths:
         in: query
         name: category
         type: string
-      - description: Minimum price
+      - description: Minimum price in cents (e.g. 1999 for $19.99)
         in: query
         name: min_price
-        type: number
-      - description: Maximum price
+        type: integer
+      - description: Maximum price in cents (e.g. 2999 for $29.99)
         in: query
         name: max_price
-        type: number
+        type: integer
       - description: Search query (name or SKU)
         in: query
         name: q
