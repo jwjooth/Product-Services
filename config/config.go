@@ -1,15 +1,21 @@
 package config
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"golang-restful-api/entities"
+	"golang-restful-api/migrations"
 
+	"github.com/golang-migrate/migrate/v4"
+	sqlMigrate "github.com/golang-migrate/migrate/v4/database/mysql"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -23,6 +29,7 @@ type Config struct {
 	DBHost             string
 	DBPort             string
 	DBName             string
+	AutoMigrate        bool
 	CORSAllowedOrigins []string
 	CORSAllowedMethods []string
 	CORSAllowedHeaders []string
@@ -40,6 +47,7 @@ func Load() Config {
 		DBHost:             getEnv("DB_HOST", "localhost"),
 		DBPort:             getEnv("DB_PORT", "3306"),
 		DBName:             getEnv("DB_NAME", "products"),
+		AutoMigrate:        getEnvBool("AUTO_MIGRATE", false),
 		CORSAllowedOrigins: getEnvList("CORS_ALLOWED_ORIGINS", []string{"*"}),
 		CORSMaxAge:         getEnvInt("CORS_MAX_AGE", 300),
 		CORSAllowedHeaders: getEnvList("CORS_ALLOWED_HEADERS", []string{
@@ -90,10 +98,53 @@ func OpenDB(cfg Config) (*gorm.DB, error) {
 	return db, nil
 }
 
-// Migrate runs AutoMigrate for all entities. Safe for dev; use versioned
-// migrations (golang-migrate) for production schema evolution.
-func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&entities.ProductEntity{})
+// Migrate applies schema changes using GORM AutoMigrate or versioned SQL migrations.
+// Versioned migrations only run when RUN_MIGRATIONS=true (default: false).
+func Migrate(db *gorm.DB, cfg Config) error {
+	if cfg.AutoMigrate {
+		log.Println("AUTO_MIGRATE is enabled; using GORM AutoMigrate (intended for development only)")
+		return db.AutoMigrate(&entities.ProductEntity{})
+	}
+
+	if !getEnvBool("RUN_MIGRATIONS", false) {
+		log.Println("RUN_MIGRATIONS is not enabled; skipping versioned migrations")
+		return nil
+	}
+
+	// Open a dedicated connection for migrations so the shared pool is not
+	// affected when golang-migrate closes the database driver.
+	migrationDB, err := sql.Open("mysql", cfg.DSN())
+	if err != nil {
+		return fmt.Errorf("open migration connection: %w", err)
+	}
+	defer migrationDB.Close()
+
+	driver, err := sqlMigrate.WithInstance(migrationDB, &sqlMigrate.Config{})
+	if err != nil {
+		return err
+	}
+
+	sourceDriver, err := iofs.New(migrations.Files, ".")
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithInstance("iofs", sourceDriver, "mysql", driver)
+	if err != nil {
+		return err
+	}
+
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+
+	version, dirty, verErr := m.Version()
+	if verErr != nil {
+		log.Printf("Migrations applied but could not read schema version: %v", verErr)
+	} else {
+		log.Printf("Database schema version: %d (dirty: %v)", version, dirty)
+	}
+	return nil
 }
 
 // CloseDB closes the underlying sql.DB connection.
@@ -117,6 +168,15 @@ func getEnvInt(key string, fallback int) int {
 	if v := os.Getenv(key); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return n
+		}
+	}
+	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	if v := os.Getenv(key); v != "" {
+		if value, err := strconv.ParseBool(v); err == nil {
+			return value
 		}
 	}
 	return fallback
