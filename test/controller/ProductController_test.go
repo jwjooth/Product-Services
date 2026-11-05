@@ -90,7 +90,7 @@ func TestProductController_ListProducts(t *testing.T) {
 		router := setupProductRouter(ctrl)
 
 		expectedList := []payload.ProductResponse{
-			{ID: 1, Name: "Keyboard", Price: 100, Stock: 5, Category: "Accessories", ImageUrl: "img.jpg", SKU: "KB001"},
+			{ID: 1, Name: "Keyboard", Price: payload.Price{Cents: 10000}, Stock: 5, Category: "Accessories", ImageUrl: "img.jpg", SKU: "KB001"},
 		}
 		svc.On("List", mock.Anything, 1, 10, payload.ProductFilter{}).Return(expectedList, int64(1), nil)
 
@@ -184,7 +184,7 @@ func TestProductController_CreateProduct(t *testing.T) {
 		ctrl := controller.NewProductController(svc)
 		router := setupProductRouter(ctrl)
 
-		createReq := payload.CreateProductRequest{Name: "Monitor", Price: 300, Stock: 4, Category: "Electronics", ImageUrl: "https://example.com/monitor.jpg", SKU: "MON001"}
+		createReq := payload.CreateProductRequest{Name: "Monitor", Price: payload.Price{Cents: 30000}, Stock: 4, Category: "Electronics", ImageUrl: "https://example.com/monitor.jpg", SKU: "MON001"}
 		svc.On("Create", mock.Anything, createReq).Return(payload.ProductResponse{ID: 2, Name: "Monitor", Category: "Electronics", SKU: "MON001"}, nil)
 
 		body, _ := json.Marshal(createReq)
@@ -213,7 +213,7 @@ func TestProductController_CreateProduct(t *testing.T) {
 		ctrl := controller.NewProductController(svc)
 		router := setupProductRouter(ctrl)
 
-		req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader([]byte(`{"name":"Monitor","price":300,"stock":4,"sku":"MON001","unknown_prop":"hack"}`)))
+		req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader([]byte(`{"name":"Monitor","price":"300.00","stock":4,"sku":"MON001","unknown_prop":"hack"}`)))
 		rec := httptest.NewRecorder()
 		router.ServeHTTP(rec, req)
 
@@ -227,7 +227,7 @@ func TestProductController_CreateProduct(t *testing.T) {
 		ctrl := controller.NewProductController(svc)
 		router := setupProductRouter(ctrl)
 
-		req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader([]byte(`{"name":"Monitor","price":300,"stock":4,"sku":"MON001"}{"extra":1}`)))
+		req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader([]byte(`{"name":"Monitor","price":"300.00","stock":4,"sku":"MON001"}{"extra":1}`)))
 		rec := httptest.NewRecorder()
 		router.ServeHTTP(rec, req)
 
@@ -240,7 +240,7 @@ func TestProductController_CreateProduct(t *testing.T) {
 		ctrl := controller.NewProductController(svc)
 		router := setupProductRouter(ctrl)
 
-		createReq := payload.CreateProductRequest{Name: "", Price: 0}
+		createReq := payload.CreateProductRequest{Name: "", Price: payload.Price{Cents: 0}}
 		svc.On("Create", mock.Anything, createReq).Return(payload.ProductResponse{}, helper.BadRequest("Name is required"))
 
 		body, _ := json.Marshal(createReq)
@@ -260,7 +260,7 @@ func TestProductController_UpdateProduct(t *testing.T) {
 		ctrl := controller.NewProductController(svc)
 		router := setupProductRouter(ctrl)
 
-		updateReq := payload.UpdateProductRequest{Name: "Updated Monitor", Price: 350, Stock: 5, Category: "Electronics", ImageUrl: "https://example.com/updated_monitor.jpg", SKU: "MON002"}
+		updateReq := payload.UpdateProductRequest{Name: "Updated Monitor", Price: payload.Price{Cents: 35000}, Stock: 5, Category: "Electronics", ImageUrl: "https://example.com/updated_monitor.jpg", SKU: "MON002"}
 		svc.On("Update", mock.Anything, uint(1), updateReq).Return(payload.ProductResponse{ID: 1, Name: "Updated Monitor", Category: "Electronics", SKU: "MON002"}, nil)
 
 		body, _ := json.Marshal(updateReq)
@@ -301,7 +301,7 @@ func TestProductController_UpdateProduct(t *testing.T) {
 		ctrl := controller.NewProductController(svc)
 		router := setupProductRouter(ctrl)
 
-		req := httptest.NewRequest(http.MethodPut, "/products/1", bytes.NewReader([]byte(`{"name":"Monitor","price":300,"stock":4,"sku":"MON001","unknown_prop":"hack"}`)))
+		req := httptest.NewRequest(http.MethodPut, "/products/1", bytes.NewReader([]byte(`{"name":"Monitor","price":"300.00","stock":4,"sku":"MON001","unknown_prop":"hack"}`)))
 		rec := httptest.NewRecorder()
 		router.ServeHTTP(rec, req)
 

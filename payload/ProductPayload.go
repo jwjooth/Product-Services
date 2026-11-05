@@ -11,7 +11,7 @@ type ProductResponse struct {
 	ID          uint      `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
-	Price       float64   `json:"price"`
+	Price       Price     `json:"price"`
 	Category    string    `json:"category"`
 	ImageUrl    string    `json:"imageUrl"`
 	Stock       int       `json:"stock"`
@@ -24,24 +24,24 @@ type ProductResponse struct {
 
 // CreateProductRequest is the inbound DTO for POST /products.
 type CreateProductRequest struct {
-	Name        string  `json:"name" validate:"required,min=1,max=255"`
-	Description string  `json:"description,omitempty" validate:"max=5000"`
-	Price       float64 `json:"price" validate:"required,gt=0"`
-	Stock       int     `json:"stock" validate:"gte=0"`
-	Category    string  `json:"category,omitempty" validate:"max=50"`
-	ImageUrl    string  `json:"imageUrl,omitempty"`
-	SKU         string  `json:"sku" validate:"required,max=50"`
+	Name        string `json:"name" validate:"required,min=1,max=255"`
+	Description string `json:"description,omitempty" validate:"max=5000"`
+	Price       Price  `json:"price" validate:"required,price"`
+	Stock       int    `json:"stock" validate:"gte=0"`
+	Category    string `json:"category,omitempty" validate:"max=50"`
+	ImageUrl    string `json:"imageUrl,omitempty"`
+	SKU         string `json:"sku" validate:"required,max=50"`
 }
 
 // UpdateProductRequest is the inbound DTO for PUT /products/{id} (full replace).
 type UpdateProductRequest struct {
-	Name        string  `json:"name" validate:"required,min=1,max=255"`
-	Description string  `json:"description,omitempty" validate:"max=5000"`
-	Price       float64 `json:"price" validate:"required,gt=0"`
-	Stock       int     `json:"stock" validate:"gte=0"`
-	Category    string  `json:"category,omitempty" validate:"max=50"`
-	ImageUrl    string  `json:"imageUrl,omitempty"`
-	SKU         string  `json:"sku" validate:"required,max=50"`
+	Name        string `json:"name" validate:"required,min=1,max=255"`
+	Description string `json:"description,omitempty" validate:"max=5000"`
+	Price       Price  `json:"price" validate:"required,price"`
+	Stock       int    `json:"stock" validate:"gte=0"`
+	Category    string `json:"category,omitempty" validate:"max=50"`
+	ImageUrl    string `json:"imageUrl,omitempty"`
+	SKU         string `json:"sku" validate:"required,max=50"`
 }
 
 // ListProductsMeta carries pagination metadata.
@@ -65,7 +65,7 @@ func NewProductResponse(e entities.ProductEntity) ProductResponse {
 		ID:          e.ID,
 		Name:        e.Name,
 		Description: e.Description,
-		Price:       e.Price,
+		Price:       Price{Cents: e.PriceCents},
 		Category:    e.Category,
 		ImageUrl:    e.ImageUrl,
 		Stock:       e.Stock,
@@ -88,8 +88,8 @@ func NewProductResponses(list []entities.ProductEntity) []ProductResponse {
 
 type ProductFilter struct {
 	Category string
-	MinPrice *float64
-	MaxPrice *float64
+	MinPrice *int64
+	MaxPrice *int64
 	Search   string
 	Sort     string
 }

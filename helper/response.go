@@ -95,3 +95,17 @@ func QueryFloat(r *http.Request, key string) (float64, bool) {
 	}
 	return n, true
 }
+
+// QueryInt64 returns a query parameter parsed as int64. ok is false when
+// the parameter is absent or malformed.
+func QueryInt64(r *http.Request, key string) (int64, bool) {
+	raw := strings.TrimSpace(r.URL.Query().Get(key))
+	if raw == "" {
+		return 0, false
+	}
+	n, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}

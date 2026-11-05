@@ -41,17 +41,31 @@ func (r *productRepository) Create(ctx context.Context, product *entities.Produc
 
 func (r *productRepository) FindAll(ctx context.Context, limit, offset int, filter payload.ProductFilter) ([]entities.ProductEntity, int64, error) {
 	var total int64
-	if err := r.db.WithContext(ctx).Model(&entities.ProductEntity{}).Count(&total).Error; err != nil {
+	query := applyProductFilters(r.db.WithContext(ctx).Model(&entities.ProductEntity{}), filter)
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	var records []entities.ProductEntity
-	q := r.db.WithContext(ctx)
+	q := applyProductFilters(r.db.WithContext(ctx), filter)
 	if filter.Sort != "" {
 		q = q.Order(payload.SortClause(filter.Sort))
 	} else {
 		q = q.Order("id ASC")
 	}
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+	if offset > 0 {
+		q = q.Offset(offset)
+	}
+	if err := q.Find(&records).Error; err != nil {
+		return nil, 0, err
+	}
+	return records, total, nil
+}
+
+func applyProductFilters(q *gorm.DB, filter payload.ProductFilter) *gorm.DB {
 	if filter.Category != "" {
 		q = q.Where("category = ?", filter.Category)
 	}
@@ -65,16 +79,7 @@ func (r *productRepository) FindAll(ctx context.Context, limit, offset int, filt
 		like := "%" + filter.Search + "%"
 		q = q.Where("name LIKE ? OR sku LIKE ?", like, like)
 	}
-	if limit > 0 {
-		q = q.Limit(limit)
-	}
-	if offset > 0 {
-		q = q.Offset(offset)
-	}
-	if err := q.Find(&records).Error; err != nil {
-		return nil, 0, err
-	}
-	return records, total, nil
+	return q
 }
 
 func (r *productRepository) FindByID(ctx context.Context, id uint) (*entities.ProductEntity, error) {

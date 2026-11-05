@@ -8,6 +8,14 @@ A simple product CRUD API built with Go, Chi, GORM, and MySQL.
 - Paginated product listing
 - Request validation and Swagger UI
 
+## Architecture
+
+The application separates HTTP routing (`app`), request handling (`controller`),
+business logic (`service`), and persistence (`repository`). `main.go` is the
+composition root: it loads configuration, opens and migrates the database,
+injects dependencies, and owns the server lifecycle. The repository applies
+list filters to both the result query and its pagination count.
+
 ## Run locally
 
 Requirements: Go 1.26.5+ and MySQL.

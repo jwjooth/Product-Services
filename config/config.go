@@ -103,6 +103,9 @@ func OpenDB(cfg Config) (*gorm.DB, error) {
 func Migrate(db *gorm.DB, cfg Config) error {
 	if cfg.AutoMigrate {
 		log.Println("AUTO_MIGRATE is enabled; using GORM AutoMigrate (intended for development only)")
+		if err := migratePriceToCentsBeforeAutoMigrate(db); err != nil {
+			return fmt.Errorf("price-to-cents migration before automigrate: %w", err)
+		}
 		return db.AutoMigrate(&entities.ProductEntity{})
 	}
 
@@ -113,7 +116,7 @@ func Migrate(db *gorm.DB, cfg Config) error {
 
 	// Open a dedicated connection for migrations so the shared pool is not
 	// affected when golang-migrate closes the database driver.
-	migrationDB, err := sql.Open("mysql", cfg.DSN())
+	migrationDB, err := sql.Open("mysql", cfg.DSN()+"?multiStatements=true")
 	if err != nil {
 		return fmt.Errorf("open migration connection: %w", err)
 	}
@@ -204,6 +207,34 @@ func (c Config) ValidateAuth() error {
 	}
 	if len(c.AdminAPIKey) < 32 {
 		return errors.New("ADMIN_API_KEY must be at least 32 characters")
+	}
+	return nil
+}
+
+// migratePriceToCentsBeforeAutoMigrate converts existing floating-point/decimal
+// prices to integer cents before GORM alters the column to BIGINT, so values
+// like 19.99 survive as 1999 instead of being truncated to 19. It is idempotent:
+// if the column is already BIGINT nothing is changed; if the table/column does
+// not exist yet AutoMigrate will create it.
+func migratePriceToCentsBeforeAutoMigrate(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	var dataType string
+	err = sqlDB.QueryRow(`
+		SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product' AND COLUMN_NAME = 'price'
+	`).Scan(&dataType)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+		return err
+	}
+	if dataType != "bigint" {
+		_, err = sqlDB.Exec(`UPDATE product SET price = ROUND(price * 100)`)
+		return err
 	}
 	return nil
 }

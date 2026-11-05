@@ -29,7 +29,14 @@ type productService struct {
 // NewProductServiceImpl constructs a ProductService. It no longer needs *gorm.DB:
 // transactions can be added later via a Tx-aware repository if required.
 func NewProductServiceImpl(repo repository.ProductRepository) ProductService {
-	return &productService{repo: repo, validate: validator.New()}
+	v := validator.New()
+	_ = v.RegisterValidation("price", func(fl validator.FieldLevel) bool {
+		if p, ok := fl.Field().Interface().(payload.Price); ok {
+			return p.Cents > 0
+		}
+		return false
+	})
+	return &productService{repo: repo, validate: v}
 }
 
 // NewProductServiceImplWithDB keeps backward compatibility with the old
@@ -80,7 +87,7 @@ func (s *productService) Create(ctx context.Context, req payload.CreateProductRe
 	product := &entities.ProductEntity{
 		Name:        req.Name,
 		Description: req.Description,
-		Price:       req.Price,
+		PriceCents:  req.Price.Cents,
 		Stock:       req.Stock,
 		Category:    req.Category,
 		ImageUrl:    req.ImageUrl,
@@ -112,7 +119,7 @@ func (s *productService) Update(ctx context.Context, id uint, req payload.Update
 
 	existing.Name = req.Name
 	existing.Description = req.Description
-	existing.Price = req.Price
+	existing.PriceCents = req.Price.Cents
 	existing.Stock = req.Stock
 	existing.Category = req.Category
 	existing.ImageUrl = req.ImageUrl
