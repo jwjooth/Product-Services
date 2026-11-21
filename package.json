@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "commitizen": "^4.3.2",
+    "cz-git": "^1.14.0"
+  }
+}
