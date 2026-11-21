@@ -101,18 +101,4 @@ jobs:
               });
             }
 
-  pr-review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      issues: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v5
-      - name: PR Agent review
-        uses: Codium-ai/pr-agent@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
-          CONFIG.MODEL: gemini/gemini-2.0-flash
+
