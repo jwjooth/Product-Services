@@ -6,6 +6,8 @@ import (
 	"golang-restful-api/helper"
 	"golang-restful-api/payload"
 	"golang-restful-api/service"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // ProductController is the HTTP boundary: decode → service → encode.
@@ -13,6 +15,7 @@ import (
 type ProductController interface {
 	ListProducts(w http.ResponseWriter, r *http.Request)
 	GetProductByID(w http.ResponseWriter, r *http.Request)
+	GetProductBySlug(w http.ResponseWriter, r *http.Request)
 	CreateProduct(w http.ResponseWriter, r *http.Request)
 	UpdateProduct(w http.ResponseWriter, r *http.Request)
 	DeleteProduct(w http.ResponseWriter, r *http.Request)
@@ -177,4 +180,24 @@ func (c *productController) DeleteProduct(w http.ResponseWriter, r *http.Request
 		return
 	}
 	helper.WriteSuccess(w, http.StatusOK, "product deleted successfully", nil)
+}
+
+// GetProductBySlug @Summary Get a product by slug
+// @Description Retrieve a single product by its slug
+// @Tags product
+// @Accept json
+// @Produce json
+// @Param slug path string true "Product slug"
+// @Failure 400 {object} helper.ErrorEnvelope
+// @Failure 404 {object} helper.ErrorEnvelope
+// @Router /api/v1/products/by-slug/{slug} [get]
+// @Success 200 {object} helper.SuccessEnvelope{Data=payload.ProductResponse}
+func (c *productController) GetProductBySlug(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+	result, err := c.service.GetBySlug(r.Context(), slug)
+	if err != nil {
+		helper.WriteAppError(w, err)
+		return
+	}
+	helper.WriteSuccess(w, http.StatusOK, "success", result)
 }

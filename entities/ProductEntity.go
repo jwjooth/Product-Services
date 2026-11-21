@@ -8,6 +8,7 @@ const TableNameProduct = "product"
 // ProductEntity is the persistence model for the product table.
 type ProductEntity struct {
 	ID          uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	Slug        string    `gorm:"column:slug;unique;size:255;index" json:"slug"`
 	Name        string    `gorm:"column:name;size:255;not null" json:"name"`
 	Description string    `gorm:"column:description;type:text" json:"description"`
 	Category    string    `gorm:"column:category;size:50;index:idx_category_price"`
@@ -17,6 +18,8 @@ type ProductEntity struct {
 	Rating      float64   `gorm:"column:rating;type:decimal(3,2)" json:"rating"`
 	ReviewCount int       `gorm:"column:reviewCount;default:0" json:"reviewCount"`
 	SKU         string    `gorm:"column:sku;unique;size:50" json:"sku"`
+	IsActive    bool      `gorm:"column:isActive;not null;default:true;index" json:"isActive"`
+	SortOrder   int       `gorm:"column:sortOrder;not null;default:0;index" json:"sortOrder"`
 	CreatedAt   time.Time `gorm:"column:createdAt;autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"column:updatedAt;autoUpdateTime" json:"updated_at"`
 }

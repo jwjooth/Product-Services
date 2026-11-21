@@ -64,6 +64,15 @@ func (m *MockProductService) Update(ctx context.Context, id uint, req payload.Up
 	return args.Get(0).(payload.ProductResponse), err
 }
 
+func (m *MockProductService) GetBySlug(ctx context.Context, slug string) (payload.ProductResponse, *helper.AppError) {
+	args := m.Called(ctx, slug)
+	var err *helper.AppError
+	if args.Get(1) != nil {
+		err = args.Get(1).(*helper.AppError)
+	}
+	return args.Get(0).(payload.ProductResponse), err
+}
+
 func (m *MockProductService) Delete(ctx context.Context, id uint) *helper.AppError {
 	args := m.Called(ctx, id)
 	if args.Get(0) != nil {
@@ -77,6 +86,7 @@ func setupProductRouter(ctrl controller.ProductController) *chi.Mux {
 	r.Get("/products", ctrl.ListProducts)
 	r.Post("/products", ctrl.CreateProduct)
 	r.Get("/products/{id}", ctrl.GetProductByID)
+	r.Get("/products/by-slug/{slug}", ctrl.GetProductBySlug)
 	r.Put("/products/{id}", ctrl.UpdateProduct)
 	r.Delete("/products/{id}", ctrl.DeleteProduct)
 	return r

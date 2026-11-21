@@ -9,6 +9,7 @@ import (
 // ProductResponse is the outward DTO for a product.
 type ProductResponse struct {
 	ID          uint      `json:"id"`
+	Slug        string    `json:"slug"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Price       float64   `json:"price"`
@@ -18,6 +19,8 @@ type ProductResponse struct {
 	Rating      float64   `json:"rating"`
 	ReviewCount int       `json:"reviewCount"`
 	SKU         string    `json:"sku"`
+	IsActive    bool      `json:"isActive"`
+	SortOrder   int       `json:"sortOrder"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -25,23 +28,29 @@ type ProductResponse struct {
 // CreateProductRequest is the inbound DTO for POST /products.
 type CreateProductRequest struct {
 	Name        string  `json:"name" validate:"required,min=1,max=255"`
+	Slug        string  `json:"slug,omitempty" validate:"omitempty,max=255"`
 	Description string  `json:"description,omitempty" validate:"max=5000"`
 	Price       float64 `json:"price" validate:"required,gt=0"`
 	Stock       int     `json:"stock" validate:"gte=0"`
 	Category    string  `json:"category,omitempty" validate:"max=50"`
 	ImageUrl    string  `json:"imageUrl,omitempty"`
 	SKU         string  `json:"sku" validate:"required,max=50"`
+	IsActive    *bool   `json:"isActive,omitempty"`
+	SortOrder   int     `json:"sortOrder" validate:"gte=0"`
 }
 
 // UpdateProductRequest is the inbound DTO for PUT /products/{id} (full replace).
 type UpdateProductRequest struct {
 	Name        string  `json:"name" validate:"required,min=1,max=255"`
+	Slug        string  `json:"slug,omitempty" validate:"omitempty,max=255"`
 	Description string  `json:"description,omitempty" validate:"max=5000"`
 	Price       float64 `json:"price" validate:"required,gt=0"`
 	Stock       int     `json:"stock" validate:"gte=0"`
 	Category    string  `json:"category,omitempty" validate:"max=50"`
 	ImageUrl    string  `json:"imageUrl,omitempty"`
 	SKU         string  `json:"sku" validate:"required,max=50"`
+	IsActive    *bool   `json:"isActive,omitempty"`
+	SortOrder   int     `json:"sortOrder" validate:"gte=0"`
 }
 
 // ListProductsMeta carries pagination metadata.
@@ -63,6 +72,7 @@ type ListProductsResponse struct {
 func NewProductResponse(e entities.ProductEntity) ProductResponse {
 	return ProductResponse{
 		ID:          e.ID,
+		Slug:        e.Slug,
 		Name:        e.Name,
 		Description: e.Description,
 		Price:       e.Price,
@@ -72,6 +82,8 @@ func NewProductResponse(e entities.ProductEntity) ProductResponse {
 		Rating:      e.Rating,
 		ReviewCount: e.ReviewCount,
 		SKU:         e.SKU,
+		IsActive:    e.IsActive,
+		SortOrder:   e.SortOrder,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
 	}
@@ -92,6 +104,7 @@ type ProductFilter struct {
 	MaxPrice *float64
 	Search   string
 	Sort     string
+	IncludeInactive bool
 }
 
 func SortClause(sort string) string {
@@ -104,7 +117,9 @@ func SortClause(sort string) string {
 		return "name ASC, id ASC"
 	case "newest":
 		return "createdAt DESC, id ASC"
+	case "manual", "featured":
+		return "sortOrder ASC, id ASC"
 	default:
-		return "id ASC"
+		return "sortOrder ASC, id ASC"
 	}
 }

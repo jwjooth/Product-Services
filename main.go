@@ -96,6 +96,7 @@ func main() {
 		r.Route("/products", func(r chi.Router) {
 			r.Get("/", productController.ListProducts)
 			r.Get("/{id}", productController.GetProductByID)
+			r.Get("/by-slug/{slug}", productController.GetProductBySlug)
 			r.With(auth.APIKeyAuth(cfg.AdminAPIKey)).Post("/", productController.CreateProduct)
 			r.With(auth.APIKeyAuth(cfg.AdminAPIKey)).Put("/{id}", productController.UpdateProduct)
 			r.With(auth.APIKeyAuth(cfg.AdminAPIKey)).Delete("/{id}", productController.DeleteProduct)

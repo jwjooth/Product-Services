@@ -52,6 +52,19 @@ func (m *MockProductRepository) Update(ctx context.Context, product *entities.Pr
 	return args.Get(0).(*entities.ProductEntity), args.Error(1)
 }
 
+func (m *MockProductRepository) SlugExists(ctx context.Context, slug string, excludeID uint) (bool, error) {
+	args := m.Called(ctx, slug, excludeID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockProductRepository) GetBySlug(ctx context.Context, slug string) (*entities.ProductEntity, error) {
+	args := m.Called(ctx, slug)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ProductEntity), args.Error(1)
+}
+
 func (m *MockProductRepository) Delete(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
@@ -183,6 +196,7 @@ func TestProductService_Create(t *testing.T) {
 			SKU:         req.SKU,
 		}
 
+		mockRepo.On("SlugExists", mock.Anything, "new-phone", uint(0)).Return(false, nil)
 		mockRepo.On("Create", mock.Anything, mock.MatchedBy(func(p *entities.ProductEntity) bool {
 			return p.Name == req.Name && p.Price == req.Price && p.Category == req.Category
 		})).Return(createdEntity, nil)
@@ -272,6 +286,7 @@ func TestProductService_Create(t *testing.T) {
 			SKU:   "ITEM001",
 		}
 
+		mockRepo.On("SlugExists", mock.Anything, "test-item", uint(0)).Return(false, nil)
 		mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil, errors.New("insert failed"))
 
 		_, appErr := svc.Create(context.Background(), req)

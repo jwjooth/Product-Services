@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"golang-restful-api/entities"
 	"golang-restful-api/helper"
@@ -12,10 +13,30 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// ...
+
+func (s *productService) generateSlug(ctx context.Context, name string, excludeID uint) (string, *helper.AppError) {
+	baseSlug := helper.Slugify(name)
+	slug := baseSlug
+	i := 2
+	for {
+		exists, err := s.repo.SlugExists(ctx, slug, excludeID)
+		if err != nil {
+			return "", helper.Internal("failed to check slug", err)
+		}
+		if !exists {
+			return slug, nil
+		}
+		slug = fmt.Sprintf("%s-%d", baseSlug, i)
+		i++
+	}
+}
+
 // ProductService holds business logic + validation and maps entities to DTOs.
 type ProductService interface {
 	List(ctx context.Context, page, perPage int, filter payload.ProductFilter) ([]payload.ProductResponse, int64, *helper.AppError)
 	GetByID(ctx context.Context, id uint) (payload.ProductResponse, *helper.AppError)
+	GetBySlug(ctx context.Context, slug string) (payload.ProductResponse, *helper.AppError)
 	Create(ctx context.Context, req payload.CreateProductRequest) (payload.ProductResponse, *helper.AppError)
 	Update(ctx context.Context, id uint, req payload.UpdateProductRequest) (payload.ProductResponse, *helper.AppError)
 	Delete(ctx context.Context, id uint) *helper.AppError
@@ -71,20 +92,59 @@ func (s *productService) GetByID(ctx context.Context, id uint) (payload.ProductR
 	return payload.NewProductResponse(*product), nil
 }
 
+func (s *productService) GetBySlug(ctx context.Context, slug string) (payload.ProductResponse, *helper.AppError) {
+	if slug == "" {
+		return payload.ProductResponse{}, helper.BadRequest("invalid product slug")
+	}
+	product, err := s.repo.GetBySlug(ctx, slug)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return payload.ProductResponse{}, helper.NotFound("product not found")
+		}
+		return payload.ProductResponse{}, helper.Internal("failed to fetch product", err)
+	}
+	return payload.NewProductResponse(*product), nil
+}
+
 // Create validates and persists a new product.
 func (s *productService) Create(ctx context.Context, req payload.CreateProductRequest) (payload.ProductResponse, *helper.AppError) {
 	if err := s.validate.Struct(req); err != nil {
 		return payload.ProductResponse{}, helper.BadRequest(helper.FormatValidationError(err))
 	}
 
+	slug := req.Slug
+	if slug == "" {
+		var appErr *helper.AppError
+		slug, appErr = s.generateSlug(ctx, req.Name, 0)
+		if appErr != nil {
+			return payload.ProductResponse{}, appErr
+		}
+	} else {
+		exists, err := s.repo.SlugExists(ctx, slug, 0)
+		if err != nil {
+			return payload.ProductResponse{}, helper.Internal("failed to check slug", err)
+		}
+		if exists {
+			return payload.ProductResponse{}, helper.BadRequest("slug already taken")
+		}
+	}
+
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+
 	product := &entities.ProductEntity{
 		Name:        req.Name,
+		Slug:        slug,
 		Description: req.Description,
 		Price:       req.Price,
 		Stock:       req.Stock,
 		Category:    req.Category,
 		ImageUrl:    req.ImageUrl,
 		SKU:         req.SKU,
+		IsActive:    isActive,
+		SortOrder:   req.SortOrder,
 	}
 	created, err := s.repo.Create(ctx, product)
 	if err != nil {
@@ -110,6 +170,18 @@ func (s *productService) Update(ctx context.Context, id uint, req payload.Update
 		return payload.ProductResponse{}, helper.Internal("failed to fetch product", err)
 	}
 
+	slug := req.Slug
+	if slug != "" && slug != existing.Slug {
+		exists, err := s.repo.SlugExists(ctx, slug, id)
+		if err != nil {
+			return payload.ProductResponse{}, helper.Internal("failed to check slug", err)
+		}
+		if exists {
+			return payload.ProductResponse{}, helper.BadRequest("slug already taken")
+		}
+		existing.Slug = slug
+	}
+
 	existing.Name = req.Name
 	existing.Description = req.Description
 	existing.Price = req.Price
@@ -117,6 +189,10 @@ func (s *productService) Update(ctx context.Context, id uint, req payload.Update
 	existing.Category = req.Category
 	existing.ImageUrl = req.ImageUrl
 	existing.SKU = req.SKU
+	if req.IsActive != nil {
+		existing.IsActive = *req.IsActive
+	}
+	existing.SortOrder = req.SortOrder
 
 	updated, err := s.repo.Update(ctx, existing)
 	if err != nil {

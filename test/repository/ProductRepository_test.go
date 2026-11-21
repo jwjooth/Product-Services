@@ -46,11 +46,12 @@ func TestProductRepository_Create(t *testing.T) {
 		ImageUrl:    "https://example.com/mouse.jpg",
 		Stock:       10,
 		SKU:         "MOUSE001",
+		IsActive:    true,
 	}
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `product` (`name`,`description`,`category`,`price`,`imageUrl`,`stock`,`rating`,`reviewCount`,`sku`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?)")).
-		WithArgs(product.Name, product.Description, product.Category, product.Price, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, sqlmock.AnyArg(), sqlmock.AnyArg()).
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `product` (`slug`,`name`,`description`,`category`,`price`,`imageUrl`,`stock`,`rating`,`reviewCount`,`sku`,`isActive`,`sortOrder`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")).
+		WithArgs("", product.Name, product.Description, product.Category, product.Price, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, true, 0, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -72,11 +73,11 @@ func TestProductRepository_FindAll(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM `product`")).
 			WillReturnRows(countRows)
 
-		productRows := sqlmock.NewRows([]string{"id", "name", "description", "price", "category", "imageUrl", "stock", "rating", "reviewCount", "sku", "createdAt", "updatedAt"}).
-			AddRow(1, "Prod 1", "Desc 1", 10.0, "Electronics", "img1.jpg", 5, 4.5, 10, "SKU001", time.Now(), time.Now()).
-			AddRow(2, "Prod 2", "Desc 2", 20.0, "Home", "img2.jpg", 8, 4.0, 5, "SKU002", time.Now(), time.Now())
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `product` ORDER BY id ASC LIMIT ?")).
-			WithArgs(10).
+		productRows := sqlmock.NewRows([]string{"id", "slug", "name", "description", "category", "price", "imageUrl", "stock", "rating", "reviewCount", "sku", "isActive", "sortOrder", "createdAt", "updatedAt"}).
+			AddRow(1, "prod-1", "Prod 1", "Desc 1", "Electronics", 10.0, "img1.jpg", 5, 4.5, 10, "SKU001", true, 0, time.Now(), time.Now()).
+			AddRow(2, "prod-2", "Prod 2", "Desc 2", "Home", 20.0, "img2.jpg", 8, 4.0, 5, "SKU002", true, 0, time.Now(), time.Now())
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `product` WHERE isActive = ? ORDER BY sortOrder ASC, id ASC LIMIT ?")).
+			WithArgs(true, 10).
 			WillReturnRows(productRows)
 
 		records, total, err := repo.FindAll(context.Background(), 10, 0, payload.ProductFilter{})
@@ -95,8 +96,8 @@ func TestProductRepository_FindAll(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM `product`")).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `product` WHERE category = ? AND price <= ? AND price >= ? AND (name LIKE ? OR sku LIKE ?) ORDER BY price ASC, id ASC LIMIT ? OFFSET ?")).
-			WithArgs("Electronics", 100.0, 10.0, "%mouse%", "%mouse%", 5, 10).
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `product` WHERE isActive = ? AND category = ? AND price <= ? AND price >= ? AND (name LIKE ? OR sku LIKE ?) ORDER BY price ASC, id ASC LIMIT ? OFFSET ?")).
+			WithArgs(true, "Electronics", 100.0, 10.0, "%mouse%", "%mouse%", 5, 10).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Gaming Mouse"))
 
 		minPrice, maxPrice := 10.0, 100.0
@@ -186,11 +187,12 @@ func TestProductRepository_Update(t *testing.T) {
 		Rating:      4.5,
 		ReviewCount: 12,
 		SKU:         "MOUSE002",
+		IsActive:    false,
 	}
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE `product` SET `name`=?,`description`=?,`category`=?,`price`=?,`imageUrl`=?,`stock`=?,`rating`=?,`reviewCount`=?,`sku`=?,`createdAt`=?,`updatedAt`=? WHERE `id` = ?")).
-		WithArgs(product.Name, product.Description, product.Category, product.Price, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, sqlmock.AnyArg(), sqlmock.AnyArg(), product.ID).
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE `product` SET `slug`=?,`name`=?,`description`=?,`category`=?,`price`=?,`imageUrl`=?,`stock`=?,`rating`=?,`reviewCount`=?,`sku`=?,`isActive`=?,`sortOrder`=?,`createdAt`=?,`updatedAt`=? WHERE `id` = ?")).
+		WithArgs("", product.Name, product.Description, product.Category, product.Price, product.ImageUrl, product.Stock, product.Rating, product.ReviewCount, product.SKU, false, 0, sqlmock.AnyArg(), sqlmock.AnyArg(), product.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -210,8 +212,8 @@ func TestProductRepository_Delete(t *testing.T) {
 		repo := repository.NewProductRepositoryImpl(gormDB)
 
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta("DELETE FROM `product` WHERE `product`.`id` = ?")).
-			WithArgs(1).
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE `product` SET `isActive`=?,`updatedAt`=? WHERE id = ?")).
+			WithArgs(false, sqlmock.AnyArg(), 1).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit()
 
@@ -227,8 +229,8 @@ func TestProductRepository_Delete(t *testing.T) {
 		repo := repository.NewProductRepositoryImpl(gormDB)
 
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta("DELETE FROM `product` WHERE `product`.`id` = ?")).
-			WithArgs(99).
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE `product` SET `isActive`=?,`updatedAt`=? WHERE id = ?")).
+			WithArgs(false, sqlmock.AnyArg(), 99).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectCommit()
 

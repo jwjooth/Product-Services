@@ -19,6 +19,8 @@ type ProductRepository interface {
 	Create(ctx context.Context, product *entities.ProductEntity) (*entities.ProductEntity, error)
 	FindAll(ctx context.Context, limit, offset int, filter payload.ProductFilter) ([]entities.ProductEntity, int64, error)
 	FindByID(ctx context.Context, id uint) (*entities.ProductEntity, error)
+	GetBySlug(ctx context.Context, slug string) (*entities.ProductEntity, error)
+	SlugExists(ctx context.Context, slug string, excludeID uint) (bool, error)
 	Update(ctx context.Context, product *entities.ProductEntity) (*entities.ProductEntity, error)
 	Delete(ctx context.Context, id uint) error
 }
@@ -47,10 +49,13 @@ func (r *productRepository) FindAll(ctx context.Context, limit, offset int, filt
 
 	var records []entities.ProductEntity
 	q := r.db.WithContext(ctx)
+	if !filter.IncludeInactive {
+		q = q.Where("isActive = ?", true)
+	}
 	if filter.Sort != "" {
 		q = q.Order(payload.SortClause(filter.Sort))
 	} else {
-		q = q.Order("id ASC")
+		q = q.Order("sortOrder ASC, id ASC")
 	}
 	if filter.Category != "" {
 		q = q.Where("category = ?", filter.Category)
@@ -88,6 +93,29 @@ func (r *productRepository) FindByID(ctx context.Context, id uint) (*entities.Pr
 	return &product, nil
 }
 
+func (r *productRepository) GetBySlug(ctx context.Context, slug string) (*entities.ProductEntity, error) {
+	var product entities.ProductEntity
+	if err := r.db.WithContext(ctx).Where("slug = ?", slug).First(&product).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &product, nil
+}
+
+func (r *productRepository) SlugExists(ctx context.Context, slug string, excludeID uint) (bool, error) {
+	var count int64
+	q := r.db.WithContext(ctx).Model(&entities.ProductEntity{}).Where("slug = ?", slug)
+	if excludeID > 0 {
+		q = q.Where("id <> ?", excludeID)
+	}
+	if err := q.Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *productRepository) Update(ctx context.Context, product *entities.ProductEntity) (*entities.ProductEntity, error) {
 	if err := r.db.WithContext(ctx).Save(product).Error; err != nil {
 		return nil, err
@@ -96,7 +124,7 @@ func (r *productRepository) Update(ctx context.Context, product *entities.Produc
 }
 
 func (r *productRepository) Delete(ctx context.Context, id uint) error {
-	res := r.db.WithContext(ctx).Delete(&entities.ProductEntity{}, id)
+	res := r.db.WithContext(ctx).Model(&entities.ProductEntity{}).Where("id = ?", id).Update("isActive", false)
 	if res.Error != nil {
 		return res.Error
 	}
