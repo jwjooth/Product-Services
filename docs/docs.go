@@ -165,6 +165,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/products/by-slug/{slug}": {
+            "get": {
+                "description": "Retrieve a single product by its slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "product"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/helper.SuccessEnvelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/payload.ProductResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helper.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helper.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/products/{id}": {
             "get": {
                 "description": "Retrieve a single product by its unique ID",
@@ -374,6 +429,9 @@ const docTemplate = `{
                 "imageUrl": {
                     "type": "string"
                 },
+                "isActive": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 255,
@@ -385,6 +443,14 @@ const docTemplate = `{
                 "sku": {
                     "type": "string",
                     "maxLength": 50
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "sortOrder": {
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "stock": {
                     "type": "integer",
@@ -417,6 +483,9 @@ const docTemplate = `{
             "properties": {
                 "category": {
                     "type": "string"
+                },
+                "includeInactive": {
+                    "type": "boolean"
                 },
                 "maxPrice": {
                     "type": "number",
@@ -452,6 +521,9 @@ const docTemplate = `{
                 "imageUrl": {
                     "type": "string"
                 },
+                "isActive": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -466,6 +538,12 @@ const docTemplate = `{
                 },
                 "sku": {
                     "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
                 },
                 "stock": {
                     "type": "integer"
@@ -494,6 +572,9 @@ const docTemplate = `{
                 "imageUrl": {
                     "type": "string"
                 },
+                "isActive": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 255,
@@ -505,6 +586,14 @@ const docTemplate = `{
                 "sku": {
                     "type": "string",
                     "maxLength": 50
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "sortOrder": {
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "stock": {
                     "type": "integer",

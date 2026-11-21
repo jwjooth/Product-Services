@@ -22,6 +22,8 @@ definitions:
         type: string
       imageUrl:
         type: string
+      isActive:
+        type: boolean
       name:
         maxLength: 255
         minLength: 1
@@ -31,6 +33,12 @@ definitions:
       sku:
         maxLength: 50
         type: string
+      slug:
+        maxLength: 255
+        type: string
+      sortOrder:
+        minimum: 0
+        type: integer
       stock:
         minimum: 0
         type: integer
@@ -56,6 +64,8 @@ definitions:
     properties:
       category:
         type: string
+      includeInactive:
+        type: boolean
       maxPrice:
         format: float64
         type: number
@@ -79,6 +89,8 @@ definitions:
         type: integer
       imageUrl:
         type: string
+      isActive:
+        type: boolean
       name:
         type: string
       price:
@@ -89,6 +101,10 @@ definitions:
         type: integer
       sku:
         type: string
+      slug:
+        type: string
+      sortOrder:
+        type: integer
       stock:
         type: integer
       updated_at:
@@ -104,6 +120,8 @@ definitions:
         type: string
       imageUrl:
         type: string
+      isActive:
+        type: boolean
       name:
         maxLength: 255
         minLength: 1
@@ -113,6 +131,12 @@ definitions:
       sku:
         maxLength: 50
         type: string
+      slug:
+        maxLength: 255
+        type: string
+      sortOrder:
+        minimum: 0
+        type: integer
       stock:
         minimum: 0
         type: integer
@@ -323,6 +347,39 @@ paths:
             $ref: '#/definitions/helper.ErrorEnvelope'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helper.ErrorEnvelope'
+      tags:
+      - product
+  /api/v1/products/by-slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single product by its slug
+      parameters:
+      - description: Product slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/helper.SuccessEnvelope'
+            - properties:
+                Data:
+                  $ref: '#/definitions/payload.ProductResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helper.ErrorEnvelope'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/helper.ErrorEnvelope'
       tags:
