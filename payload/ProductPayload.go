@@ -99,11 +99,11 @@ func NewProductResponses(list []entities.ProductEntity) []ProductResponse {
 }
 
 type ProductFilter struct {
-	Category string
-	MinPrice *float64
-	MaxPrice *float64
-	Search   string
-	Sort     string
+	Category        string
+	MinPrice        *float64
+	MaxPrice        *float64
+	Search          string
+	Sort            string
 	IncludeInactive bool
 }
 
